@@ -1544,3 +1544,20 @@ h4,
     display: none !important;
   }
 }
+
+/* 실제 사용 흐름: 준비 체크와 브라우저 기록 안내 */
+.consumer-journey { margin: 24px 0 30px; }
+.journey-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.journey-card { display:flex; flex-direction:column; gap:8px; border:2px solid var(--ink); border-radius:14px; padding:18px; background:#fff; box-shadow:3px 3px 0 var(--ink); text-decoration:none; }
+.journey-card:hover { background:#f8efad; transform:translateY(-2px); }
+.journey-card span { font-size:13px; color:var(--muted); }
+.preparation-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.preparation-list > label { margin:0; padding:12px; border:1px solid var(--line); border-radius:10px; align-items:flex-start; background:var(--paper); }
+.preparation-list small { display:block; color:var(--muted); }
+.practical-guide { padding:22px; background:#f5f1fc; border-radius:14px; border:1px solid var(--line); }
+.practical-guide ol { padding-left:24px; }
+.practical-guide li { padding:8px 0; }
+.practical-guide .check-label { align-items:flex-start; }
+@media (max-width:900px) { .journey-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:560px) { .journey-grid,.preparation-list { grid-template-columns:1fr; } .journey-card { padding:14px; } }
+@media print { .sidebar,.topbar,.ai-fab,.consumer-journey,.toast,.save-button,.preparation .row-actions { display:none!important; } .workspace { margin-left:0!important; } .recipe-layout { display:block!important; } .main { padding:10px!important; max-width:100%!important; } .panel { break-inside:avoid; } button { display:none!important; } a { text-decoration:none; } }

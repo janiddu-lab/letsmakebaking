@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Catalog, Entry } from "@/lib/types";
+import { browserKitchen } from "@/lib/browser-kitchen";
 export type Boot = {
   catalog: Catalog;
   profiles: Entry[];
@@ -17,8 +18,16 @@ export type Boot = {
   assets: any;
 };
 let csrf = "";
+let browserMode = false;
+export function photoUrl(id: string, profileId: string) {
+  return browserMode ? browserKitchen.photo(id) : `/api/uploads/${encodeURIComponent(id)}?profileId=${encodeURIComponent(profileId)}`;
+}
 // 모든 변경 요청에 같은 위조 방지 토큰을 붙이고 서버 오류를 한국어로 전달합니다.
 export async function api(route: string, body?: any, method?: string, extraHeaders: Record<string, string> = {}) {
+  if (browserMode && !route.startsWith("bootstrap")) {
+    const local = await browserKitchen.request(route, body, method ?? (body === undefined ? "GET" : "POST"));
+    if (local.handled) return local.data;
+  }
   const res = await fetch(`/api/${route}`, {
     method: method ?? (body === undefined ? "GET" : "POST"),
     headers: {
@@ -36,6 +45,10 @@ export async function api(route: string, body?: any, method?: string, extraHeade
   if (!res.ok)
     throw new Error(json.error?.message ?? "요청을 처리하지 못했어요.");
   if (json.meta?.csrfToken) csrf = json.meta.csrfToken;
+  if (route.startsWith("bootstrap")) {
+    browserMode = !!json.data.health.publicDemo;
+    if (browserMode) return browserKitchen.hydrate(json.data, new URL(route, window.location.origin).searchParams.get("profileId") ?? "local-default");
+  }
   return json.data;
 }
 type Context = {
@@ -78,6 +91,12 @@ export function LabProvider({ children }: { children: ReactNode }) {
         setProfileId("local-default");
       }
     });
+  }, [profileId]);
+  useEffect(() => {
+    // 다른 탭에서 주방을 수정했다면 이 탭으로 돌아왔을 때 최신 기록을 읽습니다.
+    const update = () => { if (document.visibilityState === "visible") refresh().catch(() => {}); };
+    document.addEventListener("visibilitychange", update);
+    return () => document.removeEventListener("visibilitychange", update);
   }, [profileId]);
   useEffect(() => {
     if (!toast) return;

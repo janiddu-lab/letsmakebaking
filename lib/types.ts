@@ -53,6 +53,8 @@ export type Recipe = {
   cupMl?: number;
   minScale?: number;
   maxScale?: number;
+  contentNote?: string;
+  unitConvention?: string;
   pan?: { shape: string; width: number; height?: number; depth: number };
 };
 export type Rule = {

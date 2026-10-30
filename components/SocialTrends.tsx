@@ -18,6 +18,10 @@ export default function SocialTrends() {
   const [loadError, setLoadError] = useState("");
   const [job, setJob] = useState<any>(null);
   const [periodView, setPeriodView] = useState<"week" | "today">("week");
+  const [postQuery, setPostQuery] = useState("");
+  const [postPlatform, setPostPlatform] = useState("all");
+  const [visibleCount, setVisibleCount] = useState(30);
+  useEffect(() => setVisibleCount(30), [selected, periodView, postQuery, postPlatform]);
   const continueRef = useRef(false);
   useEffect(() => {
     api("features/social")
@@ -54,13 +58,14 @@ export default function SocialTrends() {
   }
   const baseRun = data?.run;
   const run = baseRun && periodView === "today" && baseRun.today ? { ...baseRun, ...baseRun.today, since: baseRun.todaySince ?? new Date(`${baseRun.day}T00:00:00+09:00`).toISOString() } : baseRun;
-  const posts = selected
+  const keywordPosts = selected
     ? run?.posts.filter((p: any) =>
         (selectionKind === "product" ? run.keywords : run.hashtags ?? [])
           .find((k: any) => k.keyword === selected)
           ?.postIds.includes(p.id),
       )
     : run?.posts;
+  const posts = keywordPosts?.filter((p: any) => (postPlatform === "all" || p.platform === postPlatform) && p.text.toLocaleLowerCase().includes(postQuery.trim().toLocaleLowerCase()));
   return (
     <>
       <PageHeading
@@ -223,8 +228,10 @@ export default function SocialTrends() {
           <h2 className="space-top">
             {selected ? `${selectionKind === "hashtag" ? "#" : ""}${selected}의 근거 게시물` : "수집한 공개 게시물"}
           </h2>
+          <div className="field-grid"><label className="field">게시물 내용 검색<input value={postQuery} onChange={e => setPostQuery(e.target.value)} placeholder="제품명이나 재료를 입력하세요" /></label><label className="field">SNS 선택<select value={postPlatform} onChange={e => setPostPlatform(e.target.value)}><option value="all">전체 SNS</option><option value="bluesky">Bluesky</option><option value="youtube">YouTube</option><option value="instagram">Instagram</option></select></label></div>
+          <p role="status">조건에 맞는 게시물 {(posts?.length ?? 0).toLocaleString()}개 · 최신 수집 표본 안에서 검색합니다.</p>
           <div className="social-posts">
-            {posts?.slice(0, 30).map((p: any) => (
+            {posts?.slice(0, visibleCount).map((p: any) => (
               <article key={p.id}>
                 <div>
                   <Tag>{p.platform}</Tag>
@@ -243,6 +250,8 @@ export default function SocialTrends() {
               </article>
             ))}
           </div>
+          {!posts?.length && <Empty title="조건에 맞는 게시물이 없어요" description="검색어나 SNS 선택을 바꾸면 나머지 수집 자료를 볼 수 있어요." />}
+          {(posts?.length ?? 0) > visibleCount && <button className="button outline" onClick={() => setVisibleCount(n => n + 30)}>30개 더 보기 · 현재 {visibleCount}개 표시</button>}
           <p className="small muted">
             {run.notice} 빈도는 게시물당 한 번 계산하며 같은 문장의 재게시도
             제거합니다. 검색 결과의 일부만 수집하므로 전체 SNS의 유행을 대표하지

@@ -37,7 +37,9 @@ import {
   money,
   amount,
   statusLabel,
+  photoUrl,
 } from "./context";
+import { KitchenJourney, RecipePreparation, PersonalSettings } from "./ConsumerExperience";
 import { Tag, PageHeading, Empty, RecipeCard, SourceList } from "./ui";
 import {
   calculateCost,
@@ -122,8 +124,8 @@ function Shell() {
     screen = <TrendsScreen id={pathname.split("/")[2]} />;
   else if (pathname === "/journal") screen = <JournalScreen />;
   else if (pathname === "/challenges") screen = <ChallengesScreen />;
-  else if (pathname === "/settings") screen = <SettingsScreen />;
-  else if (pathname === "/admin") screen = <AdminScreen />;
+  else if (pathname === "/settings") screen = boot?.health.publicDemo ? <PersonalSettings key={profileId} /> : <SettingsScreen />;
+  else if (pathname === "/admin") screen = boot?.health.publicDemo ? <Empty title="콘텐츠 관리는 제작자 전용이에요"><Link href="/learn">베이킹 자료 둘러보기 →</Link></Empty> : <AdminScreen />;
   else if (pathname === "/saved") screen = <Saved />;
   else
     screen = (
@@ -183,13 +185,13 @@ function Shell() {
           </p>
           <Link href="/learn">작은 팁부터 만나보기 ↗</Link>
         </div>
-        {!boot?.health.publicDemo && <div className="sidebar-bottom">
+        <div className="sidebar-bottom">
           <Link href="/settings">
             <Settings size={17} />
             설정
           </Link>
-          <Link href="/admin">콘텐츠 관리 ↗</Link>
-        </div>}
+          {!boot?.health.publicDemo && <Link href="/admin">콘텐츠 관리 ↗</Link>}
+        </div>
       </aside>
       {mobile && (
         <button
@@ -216,7 +218,7 @@ function Shell() {
           <div className="topbar-right">
             <span className="local-badge">
               <i />
-              로컬 작업실
+              {boot?.health.publicDemo ? "내 브라우저에 저장" : "로컬 작업실"}
             </span>
             <label className="profile-select">
               <span className="avatar">
@@ -237,7 +239,7 @@ function Shell() {
           </div>
         </header>
         <main id="main" className="main">
-          {boot?.health.publicDemo && <p className="notice">공유용 웹 · 레시피·3D·추천·계산을 체험할 수 있어요. 저장·파일 업로드·관리·AI는 제한됩니다.{boot.health.publicCollection ? " 트렌드 새 수집은 접근 코드를 입력하면 사용할 수 있어요." : " 트렌드는 저장된 수집 결과를 표시합니다."}</p>}
+          {boot?.health.publicDemo && <p className="notice">나의 재료·가격·즐겨찾기·사진·완성 기록은 이 브라우저에 저장돼요. <Link href="/settings">기록 백업하기 ↗</Link></p>}
           {boot ? (
             screen
           ) : (
@@ -250,7 +252,7 @@ function Shell() {
         </main>
         <footer>
           우리집 베이킹랩{" "}
-          <span>직접 만든 삽화와 3D로 배우는 베이킹 · 로컬에 저장됩니다.</span>
+          <span>직접 만든 삽화와 3D로 배우는 베이킹 · {boot?.health.publicDemo ? "나의 기록은 이 브라우저에 저장됩니다." : "로컬에 저장됩니다."}</span>
           <Link href="/learn">출처와 콘텐츠 안내 ↗</Link>
         </footer>
       </div>
@@ -288,6 +290,7 @@ function Home() {
         </span>
         <span>FLOUR, BUTTER & A LITTLE CURIOSITY</span>
       </div>
+      <KitchenJourney />
       <section className="hero">
         <div className="hero-copy">
           <div className="hero-kicker">
@@ -1359,7 +1362,7 @@ function RecipeDetail({ id }: { id: string }) {
             <span>{amount(recipe.yieldCount)}개</span>
           </div>
           <div className="hero-actions">
-            <Link className="button primary" href={`/recipes/${id}/bake`}>
+            <Link className="button primary" href={`/recipes/${id}/bake?scale=${scale}`}>
               함께 만들어 보기 <ArrowRight size={17} />
             </Link>
             <Link className="button outline" href={`/discover?recipe=${id}`}>
@@ -1369,6 +1372,7 @@ function RecipeDetail({ id }: { id: string }) {
         </div>
       </div>
       <OvenSuggestion recipe={base} />
+      <RecipePreparation recipe={recipe} />
       <div className="recipe-layout">
         <div>
           <section className="panel">
@@ -1384,7 +1388,7 @@ function RecipeDetail({ id }: { id: string }) {
                   value={scale}
                   onChange={(e) => {
                     const value = Number(e.target.value);
-                    if (value > 0 && value <= 4) setScale(value);
+                    if (value >= (base.minScale ?? .25) && value <= (base.maxScale ?? 4)) { setScale(value); setPreview(null); }
                   }}
                 />
               </label>
@@ -1409,6 +1413,7 @@ function RecipeDetail({ id }: { id: string }) {
               달걀 소수량은 무게 환산 근거를 확인해 나누세요. 배수를 바꿔도 굽는
               시간을 같은 비율로 바꾸지 않아요.
             </p>
+            {base.unitConvention && <p className="notice small">계량 기준: {base.unitConvention}</p>}
             <Link href="/calculator" className="inline-link">
               컵·숟가락·팬 크기 계산하기 ↗
             </Link>
@@ -1974,8 +1979,10 @@ function BakeScreen({ id }: { id: string }) {
   const version = boot!.user.versions.find(
     (v) => v.id === params.get("version") && v.recipeId === id,
   );
-  const recipe = (version?.recipe ?? original) as Recipe;
-  const sessionId = `bake-${profileId}-${id}-${version?.id ?? "original"}-${params.get("run") ?? "active"}`;
+  const requestedScale = Number(params.get("scale") ?? 1);
+  const scale = Number.isFinite(requestedScale) && requestedScale >= (original?.minScale ?? .25) && requestedScale <= (original?.maxScale ?? 4) ? requestedScale : 1;
+  const recipe = (version?.recipe ?? (original ? { ...original, yieldCount: original.yieldCount * scale, ingredients: original.ingredients.map(i => ({ ...i, quantity: i.quantity * scale })) } : original)) as Recipe;
+  const sessionId = `bake-${profileId}-${id}-${version?.id ?? `original-${scale}`}-${params.get("run") ?? "active"}`;
   const saved = boot!.user.sessions.find((s) => s.id === sessionId);
   const [step, setStep] = useState(saved?.step ?? 0);
   const [note, setNote] = useState(saved?.note ?? "");
@@ -1986,11 +1993,11 @@ function BakeScreen({ id }: { id: string }) {
   const [proof, setProof] = useState("");
   const [baked, setBaked] = useState("");
   const [checks, setChecks] = useState<string[]>(saved?.checks ?? []);
-  if (!original) return <Empty title="레시피를 찾을 수 없어요" />;
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
+  if (!original) return <Empty title="레시피를 찾을 수 없어요"><Link href="/recipes">다른 레시피 찾기 →</Link></Empty>;
   async function persist(
     nextStep = step,
     nextTimers = timers,
@@ -2001,6 +2008,7 @@ function BakeScreen({ id }: { id: string }) {
       recipeId: id,
       versionId: version?.id ?? null,
       recipe,
+      scale,
       step: nextStep,
       note,
       timers: nextTimers,
@@ -2179,7 +2187,7 @@ function BakeScreen({ id }: { id: string }) {
           {photo && (
             <img
               className="uploaded-photo"
-              src={`/api/uploads/${photo}?profileId=${profileId}`}
+              src={photoUrl(photo!, profileId)}
               alt="내 완성 사진"
             />
           )}

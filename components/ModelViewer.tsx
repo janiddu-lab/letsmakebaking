@@ -43,9 +43,10 @@ export default function ModelViewer({
   const home = boot?.user.settings.find((s) => s.kind === "model-preference");
   const customId = compact ? home?.homeModelId : null;
   const configured = compact ? boot?.assets.home : null;
+  const builtin = compact && boot?.assets.models.some((m: any) => m.id === home?.builtinModel) ? home?.builtinModel : null;
   const url = customId
     ? `/api/features/models/${encodeURIComponent(customId)}?profileId=${profileId}`
-    : (configured ?? `/assets/models/${name}.glb`);
+    : (builtin ? `/assets/models/${builtin}.glb` : configured ?? `/assets/models/${name}.glb`);
   const custom = !!(customId || configured);
   const [supported, setSupported] = useState(false);
   const [rotate, setRotate] = useState(false);

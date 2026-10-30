@@ -20,8 +20,9 @@ import {
   MessageCircle,
   Mic,
 } from "lucide-react";
-import { useLab, api, categories, amount } from "./context";
+import { useLab, api, categories, amount, photoUrl } from "./context";
 import { Dialog, Empty, PageHeading, SourceList, Tag } from "./ui";
+import { PracticalGuide } from "./PracticalGuide";
 const ModelViewer = dynamic(() => import("./ModelViewer"), { ssr: false });
 
 // 수분 슬라이더는 원리를 설명하는 예시이며 실제 빵의 완성 모양을 예측하지 않습니다.
@@ -387,6 +388,8 @@ export function LearnScreen({ id }: { id?: string }) {
               <p>실제 내열·식품 접촉 조건은 제품 표시를 확인해 주세요.</p>
             </>
           )}
+          {article && <PracticalGuide key={article.id} id={article.id} />}
+          {(ing || tool) && <div className="space-top"><h3>이 재료·도구의 대체 방법</h3>{c.substitutions.filter(r => r.fromId === (ing?.id ?? tool?.id)).map(r => <details key={r.id}><summary>{r.description}</summary><p>적용 조건: {r.conditions}</p><p>바꿀 과정: {r.changes}</p><p>주의할 한계: {r.limits}</p></details>)}<Link className="inline-link" href="/lab">레시피를 선택해 대체 배합 확인하기 →</Link></div>}
           {advanced &&
             article?.advanced.map((line, i) => (
               <p className="advanced-note" key={i}>
@@ -476,6 +479,9 @@ export function LearnScreen({ id }: { id?: string }) {
               ...a,
               type: tabs.find((t) => t[0] === a.type)?.[1] ?? a.type,
             }));
+  const searchable = tab === "all" ? [...items, ...c.ingredients.map(i => ({ id: i.id, title: i.name, summary: `${i.description} ${i.aliases.join(" ")}`, type: "재료 사전" })), ...c.equipment.map(e => ({ id: e.id, title: e.name, summary: e.description, type: "도구 안내" }))] : items;
+  const normalized = (s: string) => s.replace(/\s/g, "").toLocaleLowerCase();
+  const visible = searchable.filter(i => normalized(i.title + i.summary).includes(normalized(q)));
   return (
     <>
       <PageHeading
@@ -516,9 +522,9 @@ export function LearnScreen({ id }: { id?: string }) {
           />
         </div>
       </div>
+      <p className="result-count" role="status">{visible.length}개의 자료 · 재료 이름과 별칭도 검색할 수 있어요.</p>
       <div className="article-grid">
-        {items
-          .filter((i) => (i.title + i.summary).includes(q))
+        {visible
           .map((item, index) => (
             <Link
               className={`article-card note-${index % 4}`}
@@ -532,6 +538,7 @@ export function LearnScreen({ id }: { id?: string }) {
             </Link>
           ))}
       </div>
+      {!visible.length && <Empty title="맞는 자료를 찾지 못했어요" description="더 짧은 단어로 검색하거나 모든 노트로 범위를 넓혀보세요."><button className="button outline" onClick={() => { setQ(""); setTab("all"); }}>검색 초기화</button></Empty>}
     </>
   );
 }
@@ -881,7 +888,7 @@ export function JournalScreen() {
               <img
                 className="uploaded-photo"
                 key={id}
-                src={`/api/uploads/${id}?profileId=${profileId}`}
+                src={photoUrl(id, profileId)}
                 alt={`${log.title}의 실제 완성 사진`}
               />
             ))}
@@ -1027,15 +1034,12 @@ export function ChallengesScreen() {
       </Dialog>
       <section className="panel space-top">
         <div className="panel-title">
-          <h2>우리들의 실험 비교</h2>
+          <h2>{boot!.health.publicDemo ? "나의 도전 기록 비교" : "우리들의 실험 비교"}</h2>
           <button className="button outline small-button" onClick={compare}>
             이 기기의 프로그램 결과 보기
           </button>
         </div>
-        <p className="muted">
-          같은 기기의 참가자가 공개 비교용으로 제출한 도전 기록만 보여요. 개인
-          대화나 사진은 포함하지 않아요.
-        </p>
+        <p className="muted">{boot!.health.publicDemo ? "이 주방에 저장한 예측과 성찰을 모아 봅니다. 다른 방문자의 기록과 합산하지 않아요." : "같은 기기의 참가자가 제출한 도전 기록을 보여요. 개인 대화나 사진은 포함하지 않아요."}</p>
         <div className="article-grid">
           {comparison.map((x) => (
             <div className="comparison-note" key={x.id}>
@@ -1046,13 +1050,11 @@ export function ChallengesScreen() {
             </div>
           ))}
         </div>
+        {!comparison.length && <p>아직 표시할 도전 기록이 없어요. 위의 도전에서 예측과 결과를 저장한 뒤 결과 보기 버튼을 눌러주세요.</p>}
       </section>
       <section className="panel space-top">
         <h2>함께 쌓는 베이킹 팁</h2>
-        <p>
-          내가 알아낸 점을 초안으로 제출하면 관리자가 근거와 표현을 검토할 수
-          있어요.
-        </p>
+        <p>{boot!.health.publicDemo ? "내가 알아낸 방법과 참고 출처를 나의 팁 노트로 남겨요. 다른 사람에게 전송되거나 공개되지 않습니다." : "내가 알아낸 점을 초안으로 제출하면 관리자가 근거와 표현을 검토할 수 있어요."}</p>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
@@ -1083,14 +1085,14 @@ export function ChallengesScreen() {
               onChange={(e) => setConBody(e.target.value)}
             />
           </label>
-          <button className="button primary">검토할 초안 제출</button>
+          <button className="button primary">{boot!.health.publicDemo ? "나의 팁 노트 저장" : "검토할 초안 제출"}</button>
         </form>
         <div className="inventory-list">
           {boot!.user.contributions.map((c) => (
             <div className="inventory-row" key={c.id}>
               <strong>{c.title}</strong>
               <Tag>
-                {c.status === "PUBLISHED" ? "검토 후 공개" : "검토 대기"}
+                {boot!.health.publicDemo ? "나의 비공개 노트" : c.status === "PUBLISHED" ? "검토 후 공개" : "검토 대기"}
               </Tag>
             </div>
           ))}

@@ -10,6 +10,8 @@ import { collectSocial, latestSocial } from "./social-trends";
 import { activeSocialJob, startSocialJob, stepSocialJob } from "./social-job";
 
 const positive = z.coerce.number().finite().positive();
+// 날씨는 도시별 공통 자료만 캐시합니다. 방문자의 개인 기록은 공개 서버 DB에 쓰지 않습니다.
+const publicWeather = new Map<string, any>();
 export async function featureApi(
   req: NextRequest,
   key: string,
@@ -128,6 +130,9 @@ export async function featureApi(
     };
     const city = cities[body.city];
     if (!city) throw new AppError("INVALID_CITY", "도시를 선택하세요.");
+    const publicMode = process.env.BAKING_PUBLIC_DEMO === "true";
+    const sharedWeather = publicWeather.get(body.city);
+    if (publicMode && sharedWeather && Date.now() - Date.parse(sharedWeather.fetchedAt) < 600000) return answer(sharedWeather);
     const cached = all("settings", profileId).find(
       (s) =>
         s.kind === "weather" &&
@@ -160,10 +165,7 @@ export async function featureApi(
         time: z.string(),
       })
       .parse(json.current);
-    return answer(
-      put(
-        "settings",
-        {
+    const record = {
           kind: "weather",
           city: body.city,
           cityName: city.name,
@@ -173,10 +175,9 @@ export async function featureApi(
           fetchedAt: new Date().toISOString(),
           source: "Open-Meteo · CC BY 4.0",
           sourceUrl: "https://open-meteo.com/",
-        },
-        profileId,
-      ),
-    );
+        };
+    if (publicMode) { publicWeather.set(body.city, record); return answer(record); }
+    return answer(put("settings", record, profileId));
   }
   if (key === "features/models/import") {
     const form = await req.formData();

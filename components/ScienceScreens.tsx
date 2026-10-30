@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useLab, api, amount } from "./context";
+import { useLab, api, amount, photoUrl } from "./context";
+import { ModelPicker } from "./ConsumerExperience";
 import { Empty, PageHeading, Tag } from "./ui";
 import {
   symptoms,
@@ -963,7 +964,7 @@ function WeatherScreen() {
 
 // 실제로 입력한 A/B 측정값만 저장하고 조건·배합이 같은 로컬 실험끼리 비교합니다.
 function TwinsScreen() {
-  const { boot, profileId, act, notify } = useLab();
+  const { boot, profileId, act, notify, refresh } = useLab();
   const [id, setId] = useState(
     boot!.catalog.recipes.find((r) => r.category === "cookie")!.id,
   );
@@ -1094,7 +1095,7 @@ function TwinsScreen() {
         {photos.map((p, i) => (
           <figure key={p}>
             <img
-              src={`/api/uploads/${p}?profileId=${profileId}`}
+              src={photoUrl(p, profileId)}
               alt={`쌍둥이 실험 ${i === 0 ? "A" : "B"} 사진`}
             />
             <figcaption>{i === 0 ? "A" : "B"}</figcaption>
@@ -1147,6 +1148,7 @@ function TwinsScreen() {
           );
           if (r) {
             setResult(r);
+            await refresh();
             notify("측정한 실험을 저장했어요.");
           }
         }}
@@ -1215,6 +1217,7 @@ export function ModelManager() {
   const models = boot!.user.settings.filter((s) => s.kind === "custom-model");
   const home = boot!.user.settings.find((s) => s.kind === "model-preference");
   const [busy, setBusy] = useState(false);
+  if (boot!.health.publicDemo) return <ModelPicker />;
   return (
     <div className="science-sheet">
       <div className="sticker-label">YOUR OBJECT, YOUR LAB 🪩</div>
