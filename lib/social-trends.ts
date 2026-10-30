@@ -268,7 +268,7 @@ export function latestSocial() {
     const dayPosts = posts.filter((p) => Date.parse(p.publishedAt) >= Date.parse(todaySince)
       && ((!p.timePrecision || p.timePrecision === "exact") || (p.timeRangeStart && Date.parse(p.timeRangeStart) >= Date.parse(todaySince))));
     const summary = summarizeSocial(posts, saved.since, saved.until);
-    run = { ...saved, instagramObserved: (saved.instagramObserved ?? []).filter((p: SocialPost) => isBakingRelated(p.text)), day: String(saved.day), targetReached: saved.target ? summary.posts.length >= saved.target : undefined,
+    run = { ...saved, status: saved.status, instagramObserved: (saved.instagramObserved ?? []).filter((p: SocialPost) => isBakingRelated(p.text)), day: String(saved.day), targetReached: saved.target ? summary.posts.length >= saved.target : undefined,
       filteredOut: posts.length - summary.posts.length, ...summary, todaySince,
       today: summarizeSocial(dayPosts, todaySince, saved.until), isStale: saved.day !== kstDayWindow().day };
   }
