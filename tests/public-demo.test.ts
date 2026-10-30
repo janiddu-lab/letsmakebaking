@@ -1,6 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { publicDemoAllows, collectionIsConfigured, publicCollectionAuthorized } from "../lib/public-demo";
+import { publicDemoAllows, collectionIsConfigured, publicCollectionAuthorized, requestHostAllowed } from "../lib/public-demo";
 describe("공유용 공개 데모", () => {
+  it("Render 공개 Host를 허용하고 임의 도메인과 내부 바인딩 주소는 차단한다", () => {
+    const origin = "https://letsmakebaking.onrender.com";
+    expect(requestHostAllowed("letsmakebaking.onrender.com", true, origin)).toBe(true);
+    expect(requestHostAllowed("evil.example", true, origin)).toBe(false);
+    expect(requestHostAllowed("0.0.0.0:10000", true, origin)).toBe(false);
+    expect(requestHostAllowed("letsmakebaking.onrender.com", false, origin)).toBe(false);
+    expect(requestHostAllowed("localhost:3210", false)).toBe(true);
+    expect(requestHostAllowed(null, true, origin)).toBe(false);
+    expect(requestHostAllowed("evil.example@localhost", false)).toBe(false);
+  });
   it.each(["bootstrap", "health", "recipes/shortbread", "features/social"])("읽기 허용: %s", (key) => expect(publicDemoAllows(key, "GET")).toBe(true));
   it.each(["matches", "calculations", "features/pan", "features/autopsy"])("계산·진단 허용: %s", (key) => expect(publicDemoAllows(key, "POST")).toBe(true));
   it.each(["admin/content", "export", "uploads/private-image", "ai/chat", "features/social/start", "state/pantry", "profiles", "import/confirm"])("기록·관리·외부 호출 차단: %s", (key) => {

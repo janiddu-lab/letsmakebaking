@@ -1,5 +1,17 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 
+// 프록시 뒤의 Next 내부 주소(0.0.0.0)가 아니라 실제 요청 Host를 허용 목록과 비교합니다.
+export function requestHostAllowed(host: string | null, publicDemo: boolean, hostedOrigin?: string) {
+  if (!host) return false;
+  try {
+    const request = new URL(`http://${host}`);
+    if (request.username || request.password || request.pathname !== "/" || request.search || request.hash) return false;
+    const allowed = new Set(["localhost", "127.0.0.1"]);
+    if (publicDemo && hostedOrigin) allowed.add(new URL(hostedOrigin).hostname);
+    return allowed.has(request.hostname);
+  } catch { return false; }
+}
+
 // 공유용 공개 배포는 별도 DB를 사용하고 새 수집은 별도 코드로 보호합니다. 로컬 버전에는 적용되지 않습니다.
 export function publicDemoAllows(key: string, method: string) {
   if (["GET", "HEAD"].includes(method)) {

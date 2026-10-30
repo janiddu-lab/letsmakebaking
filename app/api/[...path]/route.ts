@@ -34,7 +34,7 @@ import {
 import { AppError, type MatchInput, type Recipe } from "@/lib/types";
 import { createBackupZip, parseBackupZip } from "@/lib/archive";
 import { featureApi } from "@/lib/feature-api";
-import { publicDemoAllows, collectionIsConfigured, publicCollectionAuthorized } from "@/lib/public-demo";
+import { publicDemoAllows, collectionIsConfigured, publicCollectionAuthorized, requestHostAllowed } from "@/lib/public-demo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -152,7 +152,7 @@ async function handle(
       throw new AppError("DEMO_READ_ONLY", "이 동작은 공유용 웹에서 제한되어 있어요. 수집을 사용하려면 관리자가 발급한 접근 코드를 확인해 주세요.", 403);
     const profileId =
       req.nextUrl.searchParams.get("profileId") ?? "local-default";
-    if (!allowedHosts.has(req.nextUrl.hostname))
+    if (!requestHostAllowed(req.headers.get("host"), publicDemo, hostedOrigin))
       throw new AppError(
         "LOCAL_ONLY",
         "로컬 주소에서만 사용할 수 있어요.",
