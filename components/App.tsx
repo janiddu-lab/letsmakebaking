@@ -244,6 +244,7 @@ function Shell() {
             </label>
           </div>
         </header>
+        <PageTranslator />
         <main id="main" className="main">
           {boot?.health.publicDemo && <p className="notice">나의 재료·가격·즐겨찾기·사진·완성 기록은 이 브라우저에 저장돼요. <Link href="/settings">기록 백업하기 ↗</Link></p>}
           {boot ? (
@@ -256,7 +257,6 @@ function Shell() {
             </div>
           )}
         </main>
-        <PageTranslator />
         <footer>
           우리집 베이킹랩{" "}
           <span>직접 만든 삽화와 3D로 배우는 베이킹 · {boot?.health.publicDemo ? "나의 기록은 이 브라우저에 저장됩니다." : "로컬에 저장됩니다."}</span>
