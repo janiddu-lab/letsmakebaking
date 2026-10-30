@@ -13,9 +13,13 @@ describe("공유용 공개 데모", () => {
   });
   it.each(["bootstrap", "health", "recipes/shortbread", "features/social"])("읽기 허용: %s", (key) => expect(publicDemoAllows(key, "GET")).toBe(true));
   it.each(["matches", "calculations", "features/pan", "features/autopsy"])("계산·진단 허용: %s", (key) => expect(publicDemoAllows(key, "POST")).toBe(true));
-  it.each(["admin/content", "export", "uploads/private-image", "ai/chat", "features/social/start", "state/pantry", "profiles", "import/confirm"])("기록·관리·외부 호출 차단: %s", (key) => {
+  it.each(["admin/content", "export", "uploads/private-image", "features/social/start", "state/pantry", "profiles", "import/confirm"])("기록·관리·외부 호출 차단: %s", (key) => {
     expect(publicDemoAllows(key, "POST")).toBe(false);
     expect(publicDemoAllows(key, "GET")).toBe(false);
+  });
+  it("AI 질문 POST만 허용하고 대화 목록 GET은 열지 않는다", () => {
+    expect(publicDemoAllows("ai/chat", "POST")).toBe(true);
+    expect(publicDemoAllows("ai/chat", "GET")).toBe(false);
   });
   it("삭제·수정 동작을 차단한다", () => {
     expect(publicDemoAllows("recipes/shortbread", "DELETE")).toBe(false);

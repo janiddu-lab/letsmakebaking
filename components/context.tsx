@@ -13,7 +13,7 @@ export type Boot = {
   profiles: Entry[];
   profile: Entry;
   user: Record<string, Entry[]>;
-  health: { ai: boolean; model: string | null; publicDemo?: boolean; publicCollection?: boolean };
+  health: { ai: boolean; model: string | null; aiProvider?: string; publicDemo?: boolean; publicCollection?: boolean };
   trends: any;
   assets: any;
 };

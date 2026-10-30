@@ -258,7 +258,7 @@ function Shell() {
           <Link href="/learn">출처와 콘텐츠 안내 ↗</Link>
         </footer>
       </div>
-      {!boot?.health.publicDemo && <button
+      {boot && <button
         className="ai-fab"
         onClick={() => setAi(!ai)}
         aria-label="베이킹 AI 코치 열기"

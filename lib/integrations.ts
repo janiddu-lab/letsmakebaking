@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { all, get, put, catalog, transaction } from "./db";
 import { AppError } from "./types";
 import { calculateCost } from "./domain";
+import { askGemini, geminiStatus } from "./gemini";
 
 // DNS 확인과 실제 접속을 같은 IP에 고정해 내부 주소로 우회하는 요청을 막습니다.
 function publicIp(ip: string) {
@@ -321,6 +322,7 @@ export function startScheduler() {
 
 // 자료 검색 → 공용 계산 → 외부 API → 출처 검증의 순서로 답변을 만듭니다.
 export async function askAi(body: any, profileId: string) {
+  if (geminiStatus().configured) return askGemini(body, catalog());
   if (!process.env.AI_API_KEY || !process.env.AI_MODEL)
     throw new AppError(
       "PROVIDER_NOT_CONFIGURED",

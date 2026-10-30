@@ -43,7 +43,7 @@ npm run dev:local
 
 최신 트렌드 화면은 버튼을 누르면 오늘 KST 범위의 SNS 게시물을 수집해 키워드를 집계합니다. Bluesky는 키 없는 공개 API, YouTube·Instagram은 키 없는 공개 HTML 크롤러를 사용합니다. 기존 RSS는 관리 화면의 별도 기능입니다. Instagram은 공개 HTML에 캡션·게시 시각이 없거나 로그인이 필요하면 수집하지 못하며, 성공으로 표시하지 않습니다. 공개 게시물 링크를 최대 8개 넣어 해당 페이지를 직접 읽을 수도 있습니다.
 
-AI를 사용하려면 `.env.example`을 `.env.local`로 복사하고 `AI_API_KEY`, `AI_MODEL`을 입력한 뒤 서버를 다시 실행하세요. OpenAI Responses API를 사용하며 모델은 본인의 API 계정에서 사용할 수 있는 이름을 입력합니다. 키는 브라우저로 전달하지 않습니다. 키가 없어 실제 AI 답변과 사진 인식 호출은 확인하지 않았습니다.
+Gemini AI는 로컬 `.env.local` 또는 Render Environment에 `GEMINI_API_KEY`를 설정하면 기본 모델 `gemini-3.5-flash-lite`로 연결됩니다. `GEMINI_MODEL`로 모델을 바꿀 수 있습니다. 공개 버전에서도 베이킹 코치를 사용할 수 있으며 질문·최근 대화·현재 원본 레시피·참고 자료가 동의 후 Google에 전달됩니다. 키는 서버에만 저장합니다. 기존 `AI_API_KEY`, `AI_MODEL` OpenAI 설정은 로컬 실행에서 유지합니다. 실제 Gemini 답변은 본인 키 입력 후 검증해야 합니다. 자세한 설정은 배포안내.md를 확인하세요.
 
 기록은 설정 화면에서 JSON 또는 사진 포함 ZIP으로 내려받을 수 있습니다. 코드 ZIP에는 개인 기록, API 키, 설치된 패키지와 빌드 결과를 포함하지 않았습니다.
 

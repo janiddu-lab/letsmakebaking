@@ -35,6 +35,7 @@ import { AppError, type MatchInput, type Recipe } from "@/lib/types";
 import { createBackupZip, parseBackupZip } from "@/lib/archive";
 import { featureApi } from "@/lib/feature-api";
 import { publicDemoAllows, collectionIsConfigured, publicCollectionAuthorized, requestHostAllowed } from "@/lib/public-demo";
+import { askGemini, geminiStatus } from "@/lib/gemini";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -192,11 +193,8 @@ async function handle(
     if (key === "health")
       return answer({
         database: "connected",
-        ai:
-          process.env.AI_API_KEY && process.env.AI_MODEL
-            ? "configured"
-            : "not-configured",
-        model: process.env.AI_MODEL ?? null,
+        ai: geminiStatus().configured || (!publicDemo && process.env.AI_API_KEY && process.env.AI_MODEL) ? "configured" : "not-configured",
+        model: geminiStatus().configured ? geminiStatus().model : !publicDemo ? process.env.AI_MODEL ?? null : null,
         localOnly: !publicDemo,
         publicDemo,
       });
@@ -211,8 +209,9 @@ async function handle(
         profile: get("profiles", activeId),
         user: profileData(activeId),
         health: {
-          ai: !!(process.env.AI_API_KEY && process.env.AI_MODEL),
-          model: process.env.AI_MODEL ?? null,
+          ai: geminiStatus().configured || (!publicDemo && !!(process.env.AI_API_KEY && process.env.AI_MODEL)),
+          aiProvider: geminiStatus().configured || publicDemo ? "Google Gemini" : "OpenAI",
+          model: geminiStatus().configured ? geminiStatus().model : !publicDemo ? process.env.AI_MODEL ?? null : null,
           publicDemo,
           publicCollection: publicDemo && collectionIsConfigured(),
         },
@@ -262,6 +261,8 @@ async function handle(
         return answer({ deleted: true });
       }
     }
+    // 공개 AI는 방문자 질문·맥락만 처리하며 공용 프로필의 대화나 재고를 읽지 않습니다.
+    if (publicDemo && key === "ai/chat") return answer(await askGemini(body, catalog()));
     if (!get("profiles", profileId))
       throw new AppError("NOT_FOUND", "로컬 프로필이 없어요.", 404);
     const featureResponse = await featureApi(req, key, body, profileId, answer);

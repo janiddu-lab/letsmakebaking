@@ -1767,7 +1767,7 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [sessionId] = useState(() => crypto.randomUUID());
   async function submit() {
-    if (!text.trim() || busy) return;
+    if (!text.trim() || busy || !consent || !boot!.health.ai) return;
     const message = text;
     setText("");
     setMessages((m) => [...m, { role: "user", answer: message }]);
@@ -1775,25 +1775,25 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
     const recipeId = window.location.pathname.startsWith("/recipes/")
       ? window.location.pathname.split("/")[2]
       : undefined;
-    const response = await act(() =>
-      api(`ai/chat?profileId=${profileId}`, {
+    try {
+      const response = await api(`ai/chat?profileId=${profileId}`, {
         message,
         sessionId,
         recipeId,
         consent,
-      }),
-    );
-    if (response)
+        history: messages.filter(m => m.role === "user" || m.role === "assistant").slice(-6).map(m => ({ role: m.role, content: String(m.answer).slice(0, 5000) })),
+      });
       setMessages((m) => [...m, { role: "assistant", ...response }]);
-    else
+    } catch (error) {
+      setText(message);
       setMessages((m) => [
         ...m,
         {
           role: "error",
-          answer: "요청을 완료하지 못했어요. 연결과 설정을 확인해 주세요.",
+          answer: error instanceof Error ? error.message : "요청을 완료하지 못했어요. 다시 시도해 주세요.",
         },
       ]);
-    setBusy(false);
+    } finally { setBusy(false); }
   }
   function voice() {
     const Constructor =
@@ -1834,8 +1834,7 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
             <Sparkles size={34} />
             <h3>키를 연결하면 대화를 시작해요</h3>
             <p>
-              서버의 .env.local에 AI_API_KEY와 AI_MODEL을 입력하고 다시 실행해
-              주세요.
+              {boot!.health.publicDemo ? "제작자가 Render → Environment에 GEMINI_API_KEY를 넣고 재배포하면 활성화됩니다. API 키를 이 대화창에 입력하지 마세요." : "서버의 .env.local에 GEMINI_API_KEY를 입력하고 다시 실행해 주세요. 기존 OpenAI 설정도 사용할 수 있어요."}
             </p>
             <p>키 없이도 추천·계산·팁·3D·기록 기능은 사용할 수 있어요.</p>
             <Link href="/settings" onClick={onClose}>
@@ -1897,6 +1896,7 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
                 {s}
               </p>
             ))}
+            {m.questions?.map((q: string) => <button key={q} className="suggested-question" onClick={() => setText(q)}>{q}</button>)}
           </div>
         ))}
         {busy && <p className="muted">자료를 찾아 설명하고 있어요…</p>}
@@ -1914,13 +1914,13 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
             checked={consent}
             onChange={(e) => setConsent(e.target.checked)}
           />
-          질문과 현재 레시피 맥락을 OpenAI로 전송해요. 비용이 발생할 수 있어요.
+          질문·최근 대화·현재 원본 레시피와 참고 자료를 {boot!.health.aiProvider ?? "Google Gemini"}로 전송하는 데 동의해요. API 사용료가 발생할 수 있어요.
         </label>
         <div>
           <textarea
             aria-label="AI 코치 질문"
             value={text}
-            maxLength={8000}
+            maxLength={4000}
             onChange={(e) => setText(e.target.value)}
             placeholder="궁금한 점을 적어주세요"
             disabled={!boot!.health.ai}
