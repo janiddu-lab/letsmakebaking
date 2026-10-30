@@ -68,7 +68,8 @@ export function LabProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
   async function refresh() {
-    const data = await api(
+    // 개인 기록 변경 때마다 큰 레시피·SNS 목록을 다시 내려받지 않습니다.
+    const data = boot?.health.publicDemo ? await browserKitchen.hydrate(boot, profileId) : await api(
       `bootstrap?profileId=${encodeURIComponent(profileId)}`,
     );
     setBoot(data);
