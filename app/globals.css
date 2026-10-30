@@ -947,18 +947,23 @@ td a {
   height: 300px;
 }
 .hero-visual .model-controls {
-  font-size: 8px;
+  font-size: 12px;
   justify-content: center;
   position: absolute;
   bottom: 1px;
   left: 0;
   right: 0;
   gap: 9px;
-  opacity: 0.65;
+  opacity: 1;
+  z-index: 5;
+  background: #fffdf1ed;
+  border-radius: 10px;
 }
 .hero-visual .model-controls button {
-  font-size: 8px;
+  font-size: 12px;
+  min-height: 44px;
 }
+.hero-visual .floating-label { pointer-events: none; }
 .hero-stamp {
   position: absolute;
   right: 22px;
