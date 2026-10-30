@@ -2,6 +2,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { siteActions } from "@/lib/site-navigation";
+import { RecipeWeatherContext } from "./WeatherAdvisor";
 import dynamic from "next/dynamic";
 import {
   Croissant,
@@ -95,13 +98,15 @@ function Shell() {
   useLocale();
   const pathname = usePathname();
   const params = useSearchParams();
+  const router = useRouter();
+  const [siteQuery, setSiteQuery] = useState("");
   const scienceTab = params.get("tab") ?? "chemistry";
   const { boot, profileId, setProfile } = useLab();
   const [mobile, setMobile] = useState(false);
-  const [ai, setAi] = useState(false);
   useEffect(() => setMobile(false), [pathname]);
   let screen;
   if (pathname === "/") screen = <Home />;
+  else if (pathname === "/ask") screen = <><PageHeading eyebrow="ASK & GO" title="물어보고, 바로 시작해요" description="사이트에 있는 내용은 해당 페이지로 바로 이동해요. 추가 설명이 필요하면 여기에서 AI에게 물어보세요." /><AiPanel key={params.get("q") ?? "ask"} inline initialQuestion={params.get("q") ?? ""} onClose={() => {}} /></>;
   else if (pathname === "/discover" || pathname === "/recipes")
     screen = <Discover listOnly={pathname === "/recipes"} />;
   else if (pathname.startsWith("/recipes/")) {
@@ -117,7 +122,7 @@ function Shell() {
   else if (pathname === "/science" || pathname === "/autopsy")
     screen = (
       <ScienceScreen
-        key={profileId + pathname + scienceTab}
+        key={profileId + pathname + params.toString()}
         initial={pathname === "/autopsy" ? "autopsy" : scienceTab}
       />
     );
@@ -245,6 +250,9 @@ function Shell() {
             </label>
           </div>
         </header>
+        <form className="site-ai-search" role="search" onSubmit={e => { e.preventDefault(); const q = siteQuery.trim(); if (!q) return; const action = siteActions(q, boot!.catalog)[0]; setSiteQuery(""); router.push(action?.href ?? `/ask?q=${encodeURIComponent(q)}`); }}>
+          <label htmlFor="site-ai-query">베이킹 물어보기</label><div><input id="site-ai-query" aria-label="사이트 AI 검색" value={siteQuery} onChange={e => setSiteQuery(e.target.value)} placeholder="컵 계량, 원가, 쿠키가 퍼졌어요…" maxLength={4000} disabled={!boot} /><button className="button primary" disabled={!boot || !siteQuery.trim()}>검색하고 이동 →</button></div>
+        </form>
         <PageTranslator />
         <main id="main" className="main">
           {boot?.health.publicDemo && <p className="notice">나의 재료·가격·즐겨찾기·사진·완성 기록은 이 브라우저에 저장돼요. <Link href="/settings">기록 백업하기 ↗</Link></p>}
@@ -264,15 +272,12 @@ function Shell() {
           <Link href="/learn">출처와 콘텐츠 안내 ↗</Link>
         </footer>
       </div>
-      {boot && <button
+      {boot && <Link href="/ask"
         className="ai-fab"
-        onClick={() => setAi(!ai)}
-        aria-label="베이킹 AI 코치 열기"
+        aria-label="베이킹 AI 검색 페이지"
       >
-        {ai ? <X size={20} /> : <Sparkles size={20} />}
-        <span>베이킹 코치</span>
-      </button>}
-      {ai && <AiPanel onClose={() => setAi(false)} />}
+        <Sparkles size={20} /><span>베이킹 AI 검색</span>
+      </Link>}
     </>
   );
 }
@@ -1388,6 +1393,7 @@ function RecipeDetail({ id }: { id: string }) {
       </div>
       <OvenSuggestion recipe={base} />
       <RecipePreparation key={`${id}-${scale}`} recipe={recipe} />
+      <RecipeWeatherContext recipe={recipe} />
       <div className="recipe-layout">
         <div>
           <section className="panel">
@@ -2086,6 +2092,7 @@ function BakeScreen({ id }: { id: string }) {
         }
       />
       <OvenSuggestion recipe={recipe} />
+      <RecipeWeatherContext recipe={recipe} />
       {scale !== 1 && !version && <p className="notice">현재 원본의 {amount(scale)}배 · 계획 {amount(recipe.yieldCount)}개입니다. 굽는 시간·온도는 자동으로 늘리지 않습니다. 원래 틀 크기와 반죽 높이를 확인하고 필요하면 여러 팬에 나눠 굽거나 <Link href="/science?tab=pan">팬 환산</Link>을 확인하세요.</p>}
       <LiveBake key={sessionId} recipe={recipe} sessionId={sessionId} />
       <div className="bake-layout">

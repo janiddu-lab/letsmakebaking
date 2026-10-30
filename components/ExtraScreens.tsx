@@ -1765,11 +1765,11 @@ export function AdminScreen() {
 }
 
 // API 키는 이 화면에 오지 않습니다. 질문과 동의만 로컬 서버에 전달합니다.
-export function AiPanel({ onClose }: { onClose: () => void }) {
+export function AiPanel({ onClose, inline = false, initialQuestion = "" }: { onClose: () => void; inline?: boolean; initialQuestion?: string }) {
   const router = useRouter();
   const { boot, profileId, act, notify } = useLab();
   const { language, t } = useLocale();
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialQuestion);
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
@@ -1802,6 +1802,12 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
         history: messages.filter(m => m.role === "user" || m.role === "assistant").slice(-6).map(m => ({ role: m.role, content: String(m.answer).slice(0, 5000) })),
       });
       setMessages((m) => [...m, { role: "assistant", ...response }]);
+      // AI가 실제로 참조한 자료도 카탈로그에 존재하는 경우에만 바로 엽니다.
+      const reference = response.refs?.find((ref: any) => boot!.catalog.recipes.some(r => r.id === ref.id) || boot!.catalog.articles.some(a => a.id === ref.id));
+      if (reference && response.responseKind === "GROUNDED_GUIDANCE") {
+        const href = boot!.catalog.recipes.some(r => r.id === reference.id) ? `/recipes/${encodeURIComponent(reference.id)}` : `/learn/${encodeURIComponent(reference.id)}`;
+        onClose(); router.push(href);
+      }
     } catch (error) {
       setText(message);
       setMessages((m) => [
@@ -1829,7 +1835,7 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
     recognition.start();
   }
   return (
-    <aside className="ai-panel" aria-label="베이킹 AI 코치">
+    <aside className={`ai-panel ${inline ? "ai-inline" : ""}`} aria-label="베이킹 AI 코치">
       <div className="ai-heading">
         <div>
           <Sparkles size={20} />
@@ -1838,13 +1844,13 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
             {boot!.health.ai ? "외부 API" : "설정 필요"}
           </Tag>
         </div>
-        <button
+        {!inline && <button
           className="icon-button"
           onClick={onClose}
           aria-label="AI 코치 닫기"
         >
           <X size={20} />
-        </button>
+        </button>}
       </div>
       <div className="ai-messages">
         {!boot!.health.ai ? (

@@ -15,7 +15,7 @@ import {
   type PanSpec,
 } from "@/lib/science";
 import type { Recipe } from "@/lib/types";
-import { loadCityWeather } from "@/lib/weather";
+import WeatherAdvisor from "./WeatherAdvisor";
 
 const tabs = [
   ["autopsy", "실패 역추적 🕵️"],
@@ -57,7 +57,7 @@ export function ScienceScreen({ initial = "autopsy" }: { initial?: string }) {
       ) : tab === "pan" ? (
         <PanScreen />
       ) : tab === "weather" ? (
-        <WeatherScreen />
+        <WeatherAdvisor />
       ) : tab === "twins" ? (
         <TwinsScreen />
       ) : (
@@ -827,144 +827,6 @@ function PanScreen() {
           </button>
         </>
       )}
-    </div>
-  );
-}
-
-// 실외 예보와 사용자가 직접 잰 실내 값을 구분합니다. 위치는 도시 중심부만 조회합니다.
-function WeatherScreen() {
-  const { act, profileId, save } = useLab();
-  const [city, setCity] = useState("seoul");
-  const [weather, setWeather] = useState<any>(null);
-  const [temperature, setTemperature] = useState(23);
-  const [humidity, setHumidity] = useState(50);
-  const [indoor, setIndoor] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [weatherError, setWeatherError] = useState("");
-  const advice = weatherAdvice(temperature, humidity);
-  return (
-    <div className="science-sheet">
-      <div className="sticker-label">TODAY'S DOUGH FORECAST ☁️</div>
-      <h2>오늘의 공기, 반죽은 어때?</h2>
-      <div className="field-grid">
-        <label className="field">
-          도시 중심부 날씨
-          <select value={city} disabled={busy} onChange={(e) => { setCity(e.target.value); setWeather(null); setWeatherError(""); }}>
-            {[
-              ["seoul", "서울"],
-              ["busan", "부산"],
-              ["daegu", "대구"],
-              ["daejeon", "대전"],
-              ["gwangju", "광주"],
-              ["jeju", "제주"],
-            ].map(([id, label]) => (
-              <option key={id} value={id}>
-                {label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          className="button primary"
-          disabled={busy}
-          onClick={async () => {
-            setBusy(true);
-            setWeatherError("");
-            try {
-              const r = await loadCityWeather(city, () => api("features/weather", { city }));
-              setWeather(r);
-              if (!indoor) {
-                setTemperature(r.temperature);
-                setHumidity(r.humidity);
-              }
-            } catch (error) {
-              setWeatherError(`${error instanceof Error ? error.message : "날씨를 가져오지 못했어요."} 실내 온습도를 직접 입력하거나 잠시 후 다시 시도해 주세요.`);
-            } finally { setBusy(false); }
-          }}
-        >
-          {busy ? "가져오는 중…" : "실제 날씨 불러오기"}
-        </button>
-      </div>
-      {weatherError && <p className="notice error" role="alert">{weatherError}</p>}
-      {weather && (
-        <p className="small muted">
-          {weather.cityName} 실외 모델 값 · 기준 {weather.weatherTime} · 수집{" "}
-          {new Date(weather.fetchedAt).toLocaleString("ko-KR")}
-        </p>
-      )}
-      <label className="check-label">
-        <input
-          type="checkbox"
-          checked={indoor}
-          onChange={(e) => { setIndoor(e.target.checked); if (!e.target.checked && weather) { setTemperature(weather.temperature); setHumidity(weather.humidity); } }}
-        />
-        실내 온습도계로 직접 측정한 값을 사용해요
-      </label>
-      <div className="weather-dials">
-        <label className="field">
-          {indoor ? "실내" : "참고"} 온도 °C
-          <input
-            type="number"
-            min="-30"
-            max="55"
-            value={temperature}
-            onChange={(e) =>
-              setTemperature(
-                Math.max(-30, Math.min(55, Number(e.target.value))),
-              )
-            }
-          />
-        </label>
-        <label className="field">
-          {indoor ? "실내" : "참고"} 상대습도 %
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={humidity}
-            onChange={(e) =>
-              setHumidity(Math.max(0, Math.min(100, Number(e.target.value))))
-            }
-          />
-        </label>
-      </div>
-      <div className="weather-tips">
-        {advice.tips.map((tip, i) => (
-          <article key={tip}>
-            <span>{["☁️", "🧈", "🌱"][i % 3]}</span>
-            <p>{tip}</p>
-          </article>
-        ))}
-      </div>
-      <p className="notice">
-        실외 날씨는 주방 실내·반죽 온도를 대신하지 않아요. 실내 값을 직접
-        입력하면 더 유용해요. {advice.thresholdNote}
-      </p>
-      <button
-        className="button outline"
-        onClick={() =>
-          save("settings", {
-            kind: "baking-weather-note",
-            temperature,
-            humidity,
-            indoor,
-            city,
-            tips: advice.tips,
-            observedAt: new Date().toISOString(),
-          })
-        }
-      >
-        오늘의 조건 기록
-      </button>
-      <p className="small">
-        <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
-          날씨: Open-Meteo · CC BY 4.0 ↗
-        </a>{" "}
-        ·{" "}
-        <a href={advice.source} target="_blank" rel="noreferrer">
-          습도·머랭 참고 ↗
-        </a>
-      </p>
     </div>
   );
 }
