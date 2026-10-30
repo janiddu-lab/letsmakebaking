@@ -21,7 +21,7 @@ const outputSchema = {
 export function geminiRequest(body: unknown, catalog: Catalog) {
   const input = inputSchema.parse(body);
   const words = input.message.toLocaleLowerCase().split(/\s+/).filter(w => w.length > 1);
-  const docs = [...catalog.recipes.map(r => ({ id: r.id, title: r.title, text: `${r.description}\n${r.steps.map(s => s.text).join("\n")}` })), ...catalog.articles.map(a => ({ id: a.id, title: a.title, text: a.body.join("\n") }))];
+  const docs = [...catalog.recipes.map(r => ({ id: r.id, title: r.title, text: `${r.description}\n생산량: ${r.yieldCount}개\n재료: ${r.ingredients.map(i => `${catalog.ingredients.find(ingredient => ingredient.id === i.id)?.name ?? i.id} ${i.quantity} ${i.unit}`).join(", ")}\n${r.steps.map(s => s.text).join("\n")}\n${r.contentNote ?? ""}` })), ...catalog.articles.map(a => ({ id: a.id, title: a.title, text: a.body.join("\n") }))];
   const refs = docs.map(d => ({ ...d, score: (input.recipeId === d.id ? 100 : 0) + words.filter(w => (d.title + d.text).toLocaleLowerCase().includes(w)).length })).filter(d => d.score > 0).sort((a, b) => b.score - a.score).slice(0, 6);
   const recipe = catalog.recipes.find(r => r.id === input.recipeId);
   const actions = siteActions(input.message, catalog);

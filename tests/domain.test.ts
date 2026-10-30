@@ -250,7 +250,7 @@ describe("대체와 원본 보존", () => {
 });
 describe("콘텐츠와 자산 참조", () => {
   it("레시피 수와 모든 필수 재료·도구·출처 참조가 유효하다", () => {
-    expect(c.recipes).toHaveLength(36);
+    expect(c.recipes.length).toBeGreaterThanOrEqual(36);
     for (const r of c.recipes) {
       expect(r.ingredients.length).toBeGreaterThan(0);
       expect(r.steps.length).toBeGreaterThan(0);

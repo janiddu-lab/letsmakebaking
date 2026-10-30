@@ -27,7 +27,7 @@ import { Dialog, Empty, PageHeading, SourceList, Tag, useInputDialog } from "./u
 import { PracticalGuide } from "./PracticalGuide";
 import CupWorkshop from "./CupWorkshop";
 import AiPageLinks from "./AiPageLinks";
-import { siteActions } from "@/lib/site-navigation";
+import { siteActions, replyNavigation } from "@/lib/site-navigation";
 import { useLocale } from "./Locale";
 const ModelViewer = dynamic(() => import("./ModelViewer"), { ssr: false });
 
@@ -1776,11 +1776,8 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [sessionId] = useState(() => crypto.randomUUID());
   const [navigation, setNavigation] = useState<ReturnType<typeof siteActions>[number] | null>(null);
-  const pageSuggestions = siteActions(text, boot!.catalog);
   async function submit() {
     if (!text.trim() || busy || !consent || !boot!.health.ai) return;
-    const destination = siteActions(text, boot!.catalog)[0];
-    if (destination) { setNavigation(destination); return; }
     await answerQuestion(text);
   }
   async function answerQuestion(message: string) {
@@ -1800,6 +1797,8 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
         history: messages.filter(m => m.role === "user" || m.role === "assistant").slice(-6).map(m => ({ role: m.role, content: String(m.answer).slice(0, 5000) })),
       });
       setMessages((m) => [...m, { role: "assistant", ...response }]);
+      // 입력 중에는 안내하지 않습니다. 답변이 도착한 뒤에만 이동 여부를 물어봅니다.
+      setNavigation(replyNavigation(message, response.refs ?? [], boot!.catalog));
     } catch (error) {
       setText(message);
       setMessages((m) => [
@@ -1828,9 +1827,9 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
   }
   return (
     <aside className="ai-panel" aria-label="베이킹 AI 코치">
-      <Dialog open={!!navigation} title={navigation?.id.startsWith("equipment:") ? "도구 페이지로 이동할까요?" : "관련 페이지로 이동할까요?"} onClose={() => setNavigation(null)}>
+      <Dialog open={!!navigation} title={navigation?.id.startsWith("equipment:") ? "도구 페이지로 이동할까요?" : navigation?.id.startsWith("recipe:") ? "레시피 페이지로 이동할까요?" : "관련 페이지로 이동할까요?"} onClose={() => setNavigation(null)}>
         <p>질문과 관련된 사이트 안내가 있어요.</p><strong>{navigation && t(navigation.title)}</strong><p>{navigation?.description}</p>
-        <div className="row-actions"><button className="button outline" onClick={async () => { setNavigation(null); await answerQuestion(text); }}>이동하지 않고 답변받기</button><button className="button primary" onClick={() => { if (!navigation) return; const href = navigation.href; setNavigation(null); onClose(); router.push(href); }}>이동하기</button><button className="text-button" onClick={() => setNavigation(null)}>취소</button></div>
+        <div className="row-actions"><button className="button outline" onClick={() => setNavigation(null)}>답변 계속 보기</button><button className="button primary" onClick={() => { if (!navigation) return; const href = navigation.href; setNavigation(null); onClose(); router.push(href); }}>이동하기</button><button className="text-button" onClick={() => setNavigation(null)}>취소</button></div>
       </Dialog>
       <div className="ai-heading">
         <div>
@@ -1923,7 +1922,6 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
         ))}
         {busy && <p className="muted">자료를 찾아 설명하고 있어요…</p>}
       </div>
-      <AiPageLinks actions={pageSuggestions} onNavigate={onClose} />
       <form
         className="ai-composer"
         onSubmit={(e) => {

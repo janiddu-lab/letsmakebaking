@@ -1,13 +1,29 @@
 import { describe, expect, it } from "vitest";
 import catalogData from "../content/catalog.json";
 import type { Catalog } from "../lib/types";
-import { siteActions, resolveSiteActions } from "../lib/site-navigation";
+import { siteActions, resolveSiteActions, replyNavigation } from "../lib/site-navigation";
 import { asLanguage, matchesLocalized, translateCore } from "../lib/locale";
 import { knownPublicTexts, filterPublicTranslationTexts } from "../lib/public-translation-texts";
 import { validateTranslationRows } from "../lib/translations";
 import { geminiRequest, parseGeminiReply } from "../lib/gemini";
 const catalog = catalogData as Catalog;
 describe("AI 질문에서 실제 내부 페이지로 연결", () => {
+  it.each(["휘낭시에 어떻게 만드는지 알려줘", "휘낭시에 어떻게 만들어?", "피낭시에 만드는 법", "how to make financiers", "フィナンシェの作り方"])('%s는 등록된 휘낭시에 레시피로 연결한다', question => {
+    expect(siteActions(question, catalog)[0].href).toBe("/recipes/financier");
+  });
+  it("짧은 메뉴명과 만드는 법 질문도 레시피를 찾는다", () => {
+    expect(siteActions("쇼트브레드 만드는 법", catalog)[0].href).toBe("/recipes/shortbread");
+    expect(siteActions("파운드케이크 어떻게 만들어", catalog).some(a => a.href.startsWith("/recipes/"))).toBe(true);
+  });
+  it("답변에 실제로 참조한 문서만 확인창 대상으로 쓴다", () => {
+    expect(replyNavigation("질문", [{ id: "https://evil.invalid" }], catalog)).toBeNull();
+    expect(replyNavigation("질문", [{ id: "financier" }], catalog)?.href).toBe("/recipes/financier");
+  });
+  it("메뉴 만드는 법을 물으면 AI 참고 자료에 실제 배합과 생산량도 제공한다", () => {
+    const request = geminiRequest({ message: "휘낭시에 어떻게 만들어", consent: true }, catalog);
+    const financier = request.refs.find(ref => ref.id === "financier")!;
+    expect(financier.text).toContain("30 g"); expect(financier.text).toContain("55 g"); expect(financier.text).toContain("생산량: 12개");
+  });
   it.each([["내 컵 용량은 어떻게 등록해요?", "/learn/basic-volume"], ["쿠키가 퍼졌어요", "/autopsy"], ["내 사각 팬 크기로 환산", "/science?tab=pan"], ["원가 계산하고 싶어", "/calculator?tab=cost"]])("%s → %s", (question, href) => {
     expect(siteActions(question, catalog).some(a => a.href === href)).toBe(true);
   });

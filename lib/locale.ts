@@ -4,6 +4,7 @@ export function asLanguage(value: unknown): Language { return value === "en" || 
 export const normalizeText = (value: string) => value.replace(/\s+/g, " ").trim();
 // 자주 쓰는 화면은 API 없이도 바로 전환합니다. 수치와 단위는 번역하지 않습니다.
 export const coreTranslations: Record<string, [string, string]> = {
+  "브라운버터 휘낭시에": ["Brown butter financiers", "焦がしバターのフィナンシェ"],
   "가 한 컵이에요.": ["is your one-cup reference.", "がカップ一杯の基準です。"],
   "버터 쇼트브레드": ["Butter shortbread", "バターショートブレッド"],
   "귀리 쇼트브레드": ["Oat shortbread", "オーツのショートブレッド"], "코코아 쇼트브레드": ["Cocoa shortbread", "ココアショートブレッド"],

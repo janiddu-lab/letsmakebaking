@@ -25,6 +25,7 @@ export type Recipe = {
   id: string;
   title: string;
   category: string;
+  aliases?: string[];
   description: string;
   difficulty: number;
   servings: number;

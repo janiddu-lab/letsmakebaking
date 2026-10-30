@@ -2325,6 +2325,16 @@
       ],
       "heatSafe": true,
       "description": "가운데 구멍이 있는 10~12컵 용량 번트 틀입니다. 단순 원형 팬으로 환산하지 않습니다."
+    },
+    {
+      "id": "saucepan",
+      "name": "소스팬",
+      "capabilities": [
+        "stovetop",
+        "brown-butter"
+      ],
+      "description": "가열 가능한 소스팬. 버터 갈변을 볼 수 있는 밝은 바닥을 사용합니다.",
+      "heatSafe": true
     }
   ],
   "recipes": [
@@ -6192,6 +6202,120 @@
       "maxScale": 1,
       "contentNote": "원문 배합·공정 대조 · 직접 제조 검증 없음",
       "unitConvention": "미국 원문 cup은236.588ml 기준입니다. tbsp·tsp는 원문 표기를 보존했으며 가정 숟가락과 같지 않습니다. 화면의15ml·5ml 환산은 편의상 근사입니다."
+    },
+    {
+      "id": "financier",
+      "title": "브라운버터 휘낭시에",
+      "aliases": [
+        "휘낭시에",
+        "피낭시에",
+        "financier",
+        "financiers",
+        "フィナンシェ"
+      ],
+      "category": "cake",
+      "description": "아몬드가루와 흰자를 쓰는 작은 구움과자. 갈변 전 버터 113g을 준비하고, 갈변·여과 후 80ml를 반죽에 사용합니다.",
+      "difficulty": 2,
+      "servings": 12,
+      "yieldCount": 12,
+      "activeMin": 20,
+      "totalMin": 45,
+      "appliance": "oven",
+      "equipmentIds": [
+        "oven",
+        "saucepan",
+        "bowl",
+        "whisk",
+        "scale",
+        "muffin-pan",
+        "brush",
+        "sieve",
+        "cooling-rack"
+      ],
+      "ingredients": [
+        {
+          "id": "butter-unsalted",
+          "quantity": 113,
+          "unit": "g"
+        },
+        {
+          "id": "flour-allpurpose",
+          "quantity": 30,
+          "unit": "g"
+        },
+        {
+          "id": "almond-flour",
+          "quantity": 55,
+          "unit": "g"
+        },
+        {
+          "id": "sugar-powdered",
+          "quantity": 90,
+          "unit": "g"
+        },
+        {
+          "id": "salt",
+          "quantity": 0.125,
+          "unit": "tsp"
+        },
+        {
+          "id": "egg-white",
+          "quantity": 90,
+          "unit": "g"
+        },
+        {
+          "id": "vanilla",
+          "quantity": 0.5,
+          "unit": "tsp"
+        }
+      ],
+      "steps": [
+        {
+          "text": "200°C로 예열합니다. 한 칸 약 2큰술 용량의 작은 틀 12개를 준비합니다. 미니 머핀틀도 가능합니다.",
+          "advanced": "큰 머핀틀에 같은 개수로 나누면 두께와 시간이 달라집니다.",
+          "timerMin": 10,
+          "check": "틀 크기와 내열 표시 확인"
+        },
+        {
+          "text": "밝은 소스팬에서 버터를 가열해 바닥 고형물이 황금갈색이 되면 불에서 내립니다. 걸러 식힌 뒤 80ml를 계량하고 남은 버터로 틀을 바릅니다.",
+          "advanced": "113g은 가열 전 준비량입니다. 갈변한 버터는 뜨거우므로 맨손으로 만지지 않습니다.",
+          "timerMin": 0,
+          "check": "검게 태우지 않고 갈변 상태 확인"
+        },
+        {
+          "text": "밀가루·아몬드가루·슈가파우더·소금을 섞고, 가볍게 푼 흰자·바닐라·식힌 갈변 버터 80ml를 합칩니다.",
+          "advanced": "흰자를 머랭으로 올리는 배합이 아닙니다.",
+          "timerMin": 0,
+          "check": "가루 뭉침이 남지 않도록 확인"
+        },
+        {
+          "text": "작은 틀에 나눠 담아 200°C에서 약 9~11분 굽습니다. 가장자리가 황금갈색이고 중심에 탄력이 생기는지 확인합니다.",
+          "advanced": "원문의 4분 후 추가 5~7분 과정을 합친 안내입니다. 선택 베리 장식은 생략했습니다.",
+          "timerMin": 9,
+          "check": "시간과 색·중심 상태를 함께 확인"
+        },
+        {
+          "text": "꺼내 식힘망에서 식힙니다. 포장·보관 조건은 원문 안내를 확인합니다.",
+          "advanced": "틀과 제품이 뜨거울 때 장갑을 사용합니다.",
+          "timerMin": 0,
+          "check": "열이 남은 채 바로 밀폐하지 않기"
+        }
+      ],
+      "tags": [
+        "휘낭시에",
+        "피낭시에",
+        "아몬드",
+        "브라운버터"
+      ],
+      "sourceIds": [
+        "financier-source"
+      ],
+      "evidence": "FORMULA_REVIEWED",
+      "tested": false,
+      "minScale": 0.5,
+      "maxScale": 2,
+      "cupMl": 236.588,
+      "contentNote": "출처 배합 대조 · 실제 제조 테스트 없음. 총 소요 시간은 준비·식힘을 포함한 계획용 추정치입니다. 버터 113g은 가열 전 양이며 반죽에는 갈변·여과 후 80ml를 사용합니다."
     }
   ],
   "substitutions": [
@@ -12463,6 +12587,14 @@
       "license": "reference-only",
       "note": "원문의 배합·공정을 대조한 참고 자료. 한국어 문장은 자체 작성했으며 직접 제조 테스트는 수행하지 않음.",
       "accessedAt": "2026-10-29"
+    },
+    {
+      "id": "financier-source",
+      "title": "Financiers — Joy of Baking",
+      "url": "https://joyofbaking.com/printpages/Financiersprint.html",
+      "license": "reference-only",
+      "note": "원문 분량과 공정을 대조하고 자체 문장으로 간단히 정리. 실제 제조 테스트 없음.",
+      "accessedAt": "2026-10-30"
     }
   ]
 }

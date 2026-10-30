@@ -47,9 +47,27 @@ export function siteActions(question: string, catalog: Catalog): SiteAction[] {
     return { id: `equipment:${e.id}`, title: article?.title ?? `${e.name} 대체 안내`, description: article?.summary ?? "집에 있는 도구로 대체할 수 있는 조건을 확인해요.", href: article ? `/learn/${encodeURIComponent(article.id)}` : "/learn?type=equipment" };
   }) : [];
   const matches = tools.filter(t => t.pattern.test(q) || translatedKeywords[t.id]?.test(q)).map(({ pattern, ...action }) => action);
-  const recipes = catalog.recipes.filter(r => [r.title, translateCore(r.title, "en"), translateCore(r.title, "ja")].some(title => normalize(title).length > 2 && q.includes(normalize(title)))).map(r => ({ id: `recipe:${r.id}`, title: r.title, description: "재료·준비·만들기 순서를 확인해요.", href: `/recipes/${encodeURIComponent(r.id)}` }));
+  const recipeIntent = /레시피|만드|만들|굽는법|굽는방법|recipe|howto|作り方|レシピ/.test(q);
+  const recipes = catalog.recipes.map(r => {
+    const titles = [r.title, translateCore(r.title, "en"), translateCore(r.title, "ja"), ...(r.aliases ?? [])];
+    const exact = titles.map(normalize).filter(title => title.length > 2 && q.includes(title));
+    const words = titles.flatMap(title => title.split(/\s+/)).map(normalize).filter(word => word.length >= 3 && !/^(?:만드는|만들기|레시피|볼에서|바로만드는|recipe|recipes|with|bowl|classic|basic)$/.test(word) && q.includes(word));
+    const score = exact.length ? 1000 + Math.max(...exact.map(s => s.length)) : recipeIntent && words.length ? Math.max(...words.map(s => s.length)) : 0;
+    return { recipe: r, score };
+  }).filter(r => r.score > 0).sort((a, b) => b.score - a.score).map(({ recipe: r }) => ({ id: `recipe:${r.id}`, title: r.title, description: "재료·준비·만들기 순서를 확인해요.", href: `/recipes/${encodeURIComponent(r.id)}` }));
   const articles = catalog.articles.filter(a => normalize(a.title).length > 3 && q.includes(normalize(a.title))).map(a => ({ id: `article:${a.id}`, title: a.title, description: a.summary, href: `/learn/${encodeURIComponent(a.id)}` }));
   return [...equipment, ...recipes, ...matches, ...articles].filter((a, i, all) => all.findIndex(b => b.href === a.href) === i).slice(0, 4);
+}
+export function replyNavigation(question: string, refs: { id: string }[], catalog: Catalog): SiteAction | null {
+  const matched = siteActions(question, catalog)[0];
+  if (matched) return matched;
+  for (const ref of refs) {
+    const recipe = catalog.recipes.find(r => r.id === ref.id);
+    if (recipe) return { id: `recipe:${recipe.id}`, title: recipe.title, description: "답변에 참고한 사이트 레시피입니다.", href: `/recipes/${encodeURIComponent(recipe.id)}` };
+    const article = catalog.articles.find(a => a.id === ref.id);
+    if (article) return { id: `article:${article.id}`, title: article.title, description: article.summary, href: `/learn/${encodeURIComponent(article.id)}` };
+  }
+  return null;
 }
 export function resolveSiteActions(ids: string[], candidates: SiteAction[]) {
   const selected = ids.map(id => candidates.find(a => a.id === id)).filter((a): a is SiteAction => !!a);
