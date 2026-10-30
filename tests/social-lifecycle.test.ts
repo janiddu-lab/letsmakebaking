@@ -61,15 +61,6 @@ describe("저장되는 수집 작업", () => {
     expect(blueskyPage).not.toHaveBeenCalled();
     expect(latestSocial().run?.today.posts).toHaveLength(2000);
   });
-  it("화면을 요청하면 기존 표본이 충분해도 Instagram 브라우저를 먼저 한 번 실행한다", async () => {
-    vi.mocked(crawlInstagram).mockResolvedValue({ posts: [], warnings: [] });
-    const job = startSocialJob(["bluesky", "instagram"], [], true);
-    memory.rows.find(r => r.id === job.id).posts = Array.from({ length: 2000 }, (_, i) => sample(i));
-    const result = await stepSocialJob(job.id);
-    expect(crawlInstagram).toHaveBeenCalledTimes(1);
-    expect(blueskyPage).not.toHaveBeenCalled();
-    expect(result.job.status).toBe("target_reached");
-  });
   it("접근 거부를 받으면 그 출처에 계속 요청하지 않고 목표 미달로 표시한다", async () => {
     vi.mocked(blueskyPage).mockRejectedValue(new Error("접근 거부 403"));
     const job = startSocialJob(["bluesky"]);

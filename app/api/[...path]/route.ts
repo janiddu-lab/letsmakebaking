@@ -37,7 +37,6 @@ import { featureApi } from "@/lib/feature-api";
 import { publicDemoAllows, collectionIsConfigured, publicCollectionAuthorized, requestHostAllowed } from "@/lib/public-demo";
 import { askGemini, geminiStatus } from "@/lib/gemini";
 import { translatePublicPage } from "@/lib/translations";
-import { browserStreamResponse } from "@/lib/collection-stream";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -179,12 +178,6 @@ async function handle(
         );
       if (Number(req.headers.get("content-length") ?? 0) > 25_000_000)
         throw new AppError("UPLOAD_INVALID", "요청이 너무 커요.", 413);
-    }
-    if (key === "features/social/stream" && verb === "GET") {
-      const jobId = z.string().uuid().parse(req.nextUrl.searchParams.get("jobId"));
-      const job = get("settings", jobId);
-      if (!job || job.kind !== "social-collection-job" || job.status !== "running") return new Response(null, { status: 204 });
-      return browserStreamResponse(jobId, req.signal);
     }
     let body: any = {};
     if (
