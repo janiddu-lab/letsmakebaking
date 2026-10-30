@@ -4,6 +4,7 @@ import { blueskyPage, kstDayWindow, summarizeSocial, socialConnections, type Soc
 import { crawlYoutubeQuery, crawlInstagram } from "./public-social";
 import { isBakingRelated } from "./baking-relevance";
 import { emitCollectionLive } from "./collection-live";
+import { endBrowserStream } from "./collection-stream";
 
 type Task = { platform: string; query: string; since?: string; until?: string; pages: number };
 const queries = ["베이킹", "홈베이킹", "디저트", "신상 디저트", "쿠키", "버터떡", "두쫀쿠", "빵", "baking", "dessert", "cookies", "pastry", "cake", "sourdough"];
@@ -62,6 +63,7 @@ export function startSocialJob(platforms: string[], instagramUrls: string[] = []
     for (const query of queries) tasks.push({ platform: "bluesky", query, since: start, until: end, pages: 0 });
   }
   // 같은 수집 기간의 실제 기존 자료만 합칩니다. 시연 자료는 사용하지 않습니다.
+  if (demoBrowser && platforms.includes("instagram")) tasks.sort((a, b) => Number(b.platform === "instagram") - Number(a.platform === "instagram"));
   const existing = all("settings").filter((r) => r.kind === "social-trend-run" && r.day === window.day).flatMap((r) => r.posts ?? []);
   const job = put("settings", { kind: "social-collection-job", ...window, target: 2000, requestedPlatforms: platforms,
     instagramUrls, demoBrowser, posts: uniqueSample(existing.filter((p: SocialPost) => platforms.includes(p.platform)), window.since, window.until),
@@ -82,12 +84,14 @@ export async function stepSocialJob(id: string, stop = false) {
   try {
     // 매 요청에서 작은 묶음만 읽고 저장하여 페이지 새로고침·서버 재시작 뒤에도 이어갈 수 있게 합니다.
     // 무료 서버에서 Chromium 두 개가 동시에 실행되지 않게 Instagram은 한 검색어씩 처리합니다.
-    const tasks = stop || job.posts.length >= job.target ? [] : job.tasks.splice(0, job.tasks[0]?.platform === "instagram" ? 1 : 2) as Task[];
+    // 기존 표본이 목표를 채웠어도 화면 보기를 요청한 첫 Instagram 조회는 실제로 실행합니다.
+    const firstBrowserQuery = job.demoBrowser && job.requestedPlatforms?.includes("instagram") && job.requests === 0;
+    const tasks = stop || (job.posts.length >= job.target && !firstBrowserQuery) ? [] : job.tasks.splice(0, job.tasks[0]?.platform === "instagram" ? 1 : 2) as Task[];
     const results = await Promise.allSettled(tasks.map(async (task) => {
       emitCollectionLive(job.id, { stage: "query", message: `${task.platform}에서 ‘${task.query}’ 공개 자료를 조회합니다.`, platform: task.platform, query: task.query });
       if (task.platform === "bluesky") return { task, ...(await blueskyPage(task.query, task.since ?? job.since, task.until ?? job.until)) };
       if (task.platform === "youtube") return { task, posts: await crawlYoutubeQuery(task.query, job.since, job.until), cursor: undefined };
-      const result = await crawlInstagram(job.instagramUrls, task.query, (event, image) => emitCollectionLive(job.id, event, image), !!job.demoBrowser);
+      const result = await crawlInstagram(job.instagramUrls, task.query, event => emitCollectionLive(job.id, event), !!job.demoBrowser, job.id);
       return { task, posts: result.posts, warnings: result.warnings, cursor: undefined };
     }));
     const extra: SocialPost[] = [];
@@ -118,6 +122,7 @@ export async function stepSocialJob(id: string, stop = false) {
     if (finished) {
       job.status = stop ? "stopped" : reached ? "target_reached" : "insufficient";
       job.finishedAt = new Date().toISOString();
+      endBrowserStream(job.id);
       emitCollectionLive(job.id, { stage: "done", message: `조회가 끝났습니다. 기간·관련성 검사 후 ${job.posts.length}개가 집계됐습니다.` });
       const summary = summarizeSocial(job.posts, job.since, job.until);
       put("settings", { kind: "social-trend-run", ...weekWindow(new Date(job.until)), ...summary, day: job.day,

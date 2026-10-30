@@ -2,6 +2,7 @@ import { chromium, type Page } from "playwright-core";
 import { instagramUrl, parseInstagram, publicHtml } from "./public-social";
 import type { SocialPost } from "./social-trends";
 import type { CollectionObserver } from "./collection-live";
+import { streamBrowserPage } from "./collection-stream";
 
 export function checkInstagramLocation(location: string) {
   const url = new URL(location);
@@ -20,7 +21,7 @@ export async function renderedInstagramPost(page: Page, url: string, timeout = 7
 }
 
 // 앱 기능으로 실행하는 독립 브라우저입니다. 사용자의 기존 브라우저 프로필·쿠키를 읽지 않습니다.
-export async function renderInstagram(query: string, suppliedUrls: string[] = [], observer?: CollectionObserver, demo = false) {
+export async function renderInstagram(query: string, suppliedUrls: string[] = [], observer?: CollectionObserver, demo = false, streamId?: string) {
   observer?.({ stage: "browser", message: "독립 Chromium 브라우저를 실행합니다.", query, platform: "instagram" });
   let browser;
   if (process.platform === "linux") {
@@ -37,16 +38,14 @@ export async function renderInstagram(query: string, suppliedUrls: string[] = []
     try { browser = await chromium.launch({ channel: "chrome", headless: true, timeout: 7000 }); }
     catch { throw new Error("Instagram 화면 수집에는 설치된 Microsoft Edge 또는 Chrome이 필요해요. 브라우저 실행에 실패했습니다."); }
   }
+  let stopStream: (() => Promise<void>) | undefined;
   try {
     const context = await browser.newContext({ locale: "ko-KR", acceptDownloads: false, serviceWorkers: "block", viewport: { width: 960, height: 600 } });
-    // 캡션 조회에 필요 없는 영상·이미지·글꼴 요청을 줄여 서버 자원을 아낍니다.
-    await context.route("**/*", route => ["image", "media", "font"].includes(route.request().resourceType()) ? route.abort() : route.continue());
+    // 화면을 볼 때는 게시물 이미지를 그대로 표시하며 동영상 자동 재생은 막습니다.
+    await context.route("**/*", route => (demo ? ["media", "font"] : ["image", "media", "font"]).includes(route.request().resourceType()) ? route.abort() : route.continue());
     const deadline = Date.now() + 50000;
     const page = await context.newPage();
-    const capture = async (message: string) => {
-      if (!observer) return;
-      try { checkInstagramLocation(page.url()); const bytes = await page.screenshot({ type: "jpeg", quality: 50, timeout: 2500 }); observer({ stage: "browser", message, query, platform: "instagram", url: page.url() }, `data:image/jpeg;base64,${bytes.toString("base64")}`); } catch { /* 캡처 실패가 수집 결과를 실패로 바꾸지는 않습니다. */ }
-    };
+    if (demo && streamId) stopStream = await streamBrowserPage(page, streamId).catch(() => undefined);
     const source = `https://www.instagram.com/explore/tags/${encodeURIComponent(query)}/`;
     let links = suppliedUrls.map(instagramUrl);
     if (!links.length) {
@@ -57,7 +56,6 @@ export async function renderInstagram(query: string, suppliedUrls: string[] = []
       checkInstagramLocation(page.url());
       links = await page.locator('a[href*="/reel/"], a[href*="/p/"]').evaluateAll((anchors) => anchors
         .map((anchor) => (anchor as HTMLAnchorElement).href));
-      await capture("실제 Instagram 검색 화면에서 공개 링크를 찾았습니다.");
     }
     const canonical = [...new Set(links.flatMap((url) => { try { return [instagramUrl(url)]; } catch { return []; } }))].slice(0, 6);
     observer?.({ stage: "links", message: `공개 링크 ${canonical.length}개를 확인했습니다.`, platform: "instagram", query });
@@ -70,7 +68,7 @@ export async function renderInstagram(query: string, suppliedUrls: string[] = []
     for (const url of visual) {
       if (deadline - Date.now() < 6000) break;
       observer?.({ stage: "post", message: "시연 모드: 실제 게시물을 브라우저로 열어 캡션과 날짜를 읽습니다.", platform: "instagram", query, url });
-      try { posts.push(...await renderedInstagramPost(page, url, 7000)); await capture("실제 게시물 화면을 읽었습니다."); }
+      try { posts.push(...await renderedInstagramPost(page, url, 7000)); }
       catch (e) { observer?.({ stage: "error", message: e instanceof Error ? e.message : "게시물 화면을 읽지 못했습니다.", platform: "instagram", query, url }); if (/로그인.*요구|접근 확인.*요구/.test(e instanceof Error ? e.message : "")) throw e; }
     }
     // 상세 HTML이 비어 있으면 같은 독립 브라우저에서도 읽습니다. 재시도는 두 건까지만 합니다.
@@ -83,5 +81,5 @@ export async function renderInstagram(query: string, suppliedUrls: string[] = []
     if (!posts.length) throw new Error(`Instagram 공개 게시물 링크 ${canonical.length}개는 찾았지만 캡션과 게시 날짜를 함께 읽지 못했어요.`);
     return { posts, discovered: canonical.length,
       warnings: [`Instagram ‘${query}’: 공개 링크 ${canonical.length}개에서 날짜가 있는 게시물 ${posts.length}개를 읽었어요. 인기 목록은 최신순이 아니므로 기간 밖 자료는 주간 집계에서 제외됩니다.`] };
-  } finally { await browser.close(); }
+  } finally { await stopStream?.(); await browser.close(); }
 }
