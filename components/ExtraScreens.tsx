@@ -727,6 +727,7 @@ export function JournalScreen() {
   const [symptom, setSymptom] = useState("");
   const [left, setLeft] = useState("");
   const [right, setRight] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const logs = boot!.user.journal;
   const c = boot!.catalog;
   const candidates = symptom
@@ -913,10 +914,7 @@ export function JournalScreen() {
               )}
               <button
                 className="text-button"
-                onClick={() =>
-                  confirm("이 베이킹 기록을 삭제할까요?") &&
-                  del("journal", log.id)
-                }
+                onClick={() => setDeleteId(log.id)}
               >
                 삭제
               </button>
@@ -930,6 +928,11 @@ export function JournalScreen() {
           description="레시피에서 만들기를 시작하거나 위에서 한 줄을 적어보세요."
         />
       )}
+      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)} title="이 베이킹 기록을 삭제할까요?">
+        <p>선택한 기록이 이 브라우저에서 삭제됩니다. 필요한 기록은 먼저 설정에서 백업하세요.</p>
+        <button className="button outline" onClick={() => setDeleteId(null)}>기록 유지</button>
+        <button className="button primary" onClick={async () => { if (deleteId) await del("journal", deleteId); setDeleteId(null); }}>선택한 기록 삭제</button>
+      </Dialog>
     </>
   );
 }
