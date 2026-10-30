@@ -6,6 +6,7 @@ import { z } from "zod";
 import { all, put, get, dataDirectory, catalog } from "./db";
 import { AppError } from "./types";
 import { autopsy, panPlan, summarizeTwins } from "./science";
+import { fetchCityWeather, weatherCities } from "./weather";
 import { collectSocial, latestSocial } from "./social-trends";
 import { activeSocialJob, startSocialJob, stepSocialJob } from "./social-job";
 
@@ -120,16 +121,7 @@ export async function featureApi(
           },
     );
   if (key === "features/weather") {
-    const cities: Record<string, { name: string; lat: number; lon: number }> = {
-      seoul: { name: "서울", lat: 37.57, lon: 126.98 },
-      busan: { name: "부산", lat: 35.18, lon: 129.08 },
-      daegu: { name: "대구", lat: 35.87, lon: 128.6 },
-      daejeon: { name: "대전", lat: 36.35, lon: 127.38 },
-      gwangju: { name: "광주", lat: 35.16, lon: 126.85 },
-      jeju: { name: "제주", lat: 33.5, lon: 126.53 },
-    };
-    const city = cities[body.city];
-    if (!city) throw new AppError("INVALID_CITY", "도시를 선택하세요.");
+    if (!weatherCities[body.city]) throw new AppError("INVALID_CITY", "도시를 선택하세요.");
     const publicMode = process.env.BAKING_PUBLIC_DEMO === "true";
     const sharedWeather = publicWeather.get(body.city);
     if (publicMode && sharedWeather && Date.now() - Date.parse(sharedWeather.fetchedAt) < 600000) return answer(sharedWeather);
@@ -140,42 +132,9 @@ export async function featureApi(
         Date.now() - Date.parse(s.fetchedAt) < 600000,
     );
     if (cached) return answer(cached);
-    const params = new URLSearchParams({
-      latitude: String(city.lat),
-      longitude: String(city.lon),
-      current: "temperature_2m,relative_humidity_2m",
-      timezone: "Asia/Seoul",
-      forecast_days: "1",
-    });
-    const response = await fetch(
-      `https://api.open-meteo.com/v1/forecast?${params}`,
-      { signal: AbortSignal.timeout(10000), redirect: "error" },
-    );
-    if (!response.ok)
-      throw new AppError(
-        "WEATHER_FAILED",
-        "날씨를 가져오지 못했어요. 실내 값을 직접 입력할 수 있어요.",
-        502,
-      );
-    const json = await response.json();
-    const weather = z
-      .object({
-        temperature_2m: z.number(),
-        relative_humidity_2m: z.number(),
-        time: z.string(),
-      })
-      .parse(json.current);
-    const record = {
-          kind: "weather",
-          city: body.city,
-          cityName: city.name,
-          temperature: weather.temperature_2m,
-          humidity: weather.relative_humidity_2m,
-          weatherTime: weather.time,
-          fetchedAt: new Date().toISOString(),
-          source: "Open-Meteo · CC BY 4.0",
-          sourceUrl: "https://open-meteo.com/",
-        };
+    let record;
+    try { record = await fetchCityWeather(body.city); }
+    catch { throw new AppError("WEATHER_FAILED", "날씨 제공자 연결이 원활하지 않아요. 브라우저에서 다시 확인합니다.", 502); }
     if (publicMode) { publicWeather.set(body.city, record); return answer(record); }
     return answer(put("settings", record, profileId));
   }

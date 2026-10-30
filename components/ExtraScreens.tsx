@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   ArrowRight,
@@ -21,7 +22,7 @@ import {
   Mic,
 } from "lucide-react";
 import { useLab, api, categories, amount, photoUrl, allergenName } from "./context";
-import { Dialog, Empty, PageHeading, SourceList, Tag } from "./ui";
+import { Dialog, Empty, PageHeading, SourceList, Tag, useInputDialog } from "./ui";
 import { PracticalGuide } from "./PracticalGuide";
 import CupWorkshop from "./CupWorkshop";
 import AiPageLinks from "./AiPageLinks";
@@ -726,6 +727,7 @@ export function TrendsScreen({ id }: { id?: string }) {
 
 // 실제 관찰한 값만 남기고, 재고 차감은 미리보기 후 별도로 확정합니다.
 export function JournalScreen() {
+  const { confirm: askConfirm, prompt: askPrompt, dialog: inputDialog } = useInputDialog();
   const { boot, profileId, save, del, act, notify } = useLab();
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
@@ -755,7 +757,7 @@ export function JournalScreen() {
           `${c.ingredients.find((i) => i.id === ch.ingredientId)?.name}: ${ch.lots.length}개 재고 수정${ch.missing > 0 ? ` · 부족 ${amount(ch.missing)}` : ""}`,
       )
       .join("\n");
-    if (confirm(`다음 재고 차감을 적용할까요?\n${text}`))
+    if (await askConfirm(`다음 재고 차감을 적용할까요?\n${text}`))
       await act(async () => {
         await api(`inventory-consumptions/confirm?profileId=${profileId}`, {
           bakeLogId: id,
@@ -771,6 +773,7 @@ export function JournalScreen() {
         title="한 번의 베이킹이 다음의 힌트로"
         description="잘된 점도, 아쉬운 점도 나만의 레시피가 되는 과정이에요."
       />
+      {inputDialog}
       <div className="two-column">
         <section className="panel">
           <h2>오늘의 한 줄 기록</h2>
@@ -906,7 +909,7 @@ export function JournalScreen() {
               <button
                 className="text-button"
                 onClick={async () => {
-                  const n = prompt("기록 수정", log.note ?? "");
+                  const n = await askPrompt("기록 수정", log.note ?? "");
                   if (n !== null) await save("journal", { ...log, note: n });
                 }}
               >
@@ -1763,6 +1766,7 @@ export function AdminScreen() {
 
 // API 키는 이 화면에 오지 않습니다. 질문과 동의만 로컬 서버에 전달합니다.
 export function AiPanel({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   const { boot, profileId, act, notify } = useLab();
   const { language, t } = useLocale();
   const [text, setText] = useState("");
@@ -1772,7 +1776,15 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
   const [sessionId] = useState(() => crypto.randomUUID());
   const pageSuggestions = siteActions(text, boot!.catalog);
   async function submit() {
-    if (!text.trim() || busy || !consent || !boot!.health.ai) return;
+    if (!text.trim() || busy) return;
+    const destination = siteActions(text, boot!.catalog)[0];
+    if (destination) {
+      notify(`${t(destination.title)} →`);
+      onClose();
+      router.push(destination.href);
+      return;
+    }
+    if (!consent || !boot!.health.ai) return;
     const message = text;
     setText("");
     setMessages((m) => [...m, { role: "user", answer: message }]);
@@ -1810,7 +1822,7 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
       return;
     }
     const recognition = new Constructor();
-    recognition.lang = "ko-KR";
+    recognition.lang = language === "en" ? "en-US" : language === "ja" ? "ja-JP" : "ko-KR";
     recognition.onresult = (e: any) => setText(e.results[0][0].transcript);
     recognition.onerror = () =>
       notify("마이크를 사용할 수 없어요. 직접 입력해 주세요.");
@@ -1910,6 +1922,7 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
         {busy && <p className="muted">자료를 찾아 설명하고 있어요…</p>}
       </div>
       <AiPageLinks actions={pageSuggestions} onNavigate={onClose} />
+      <p className="small notice">사이트에 있는 기능을 질문하면 전송 후 해당 페이지로 자동 이동해요. 페이지 찾기는 외부 AI로 질문을 보내지 않아요.</p>
       <form
         className="ai-composer"
         onSubmit={(e) => {
@@ -1944,7 +1957,7 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
           <button
             className="send-button"
             aria-label="질문 보내기"
-            disabled={!consent || busy || !text.trim() || !boot!.health.ai}
+            disabled={busy || !text.trim() || (!pageSuggestions.length && (!consent || !boot!.health.ai))}
           >
             <Send size={18} />
           </button>

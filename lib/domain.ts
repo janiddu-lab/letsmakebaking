@@ -136,7 +136,7 @@ export function calculateCost(
   catalog: Catalog,
   extras = 0,
 ) {
-  if (!Number.isFinite(scale) || scale <= 0 || extras < 0)
+  if (!Number.isFinite(scale) || scale <= 0 || !Number.isFinite(extras) || extras < 0 || !Number.isFinite(recipe.yieldCount) || recipe.yieldCount <= 0)
     throw new AppError("INVALID_QUANTITY", "배수와 비용을 확인해 주세요.");
   let sum = D(0),
     buy = D(0);

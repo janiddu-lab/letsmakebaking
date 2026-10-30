@@ -14,6 +14,7 @@ import {
   type PanSpec,
 } from "@/lib/science";
 import type { Recipe } from "@/lib/types";
+import { loadCityWeather } from "@/lib/weather";
 
 const tabs = [
   ["autopsy", "실패 역추적 🕵️"],
@@ -37,6 +38,7 @@ export function ScienceScreen({ initial = "autopsy" }: { initial?: string }) {
         {tabs.map(([id, label]) => (
           <button
             className={tab === id ? "active" : ""}
+            aria-pressed={tab === id}
             key={id}
             onClick={() => setTab(id)}
           >
@@ -76,13 +78,14 @@ function AutopsyScreen() {
         {symptoms.map(([id, label]) => (
           <button
             className={`symptom-card ${symptom === id ? "active" : ""}`}
+            aria-pressed={symptom === id}
             key={id}
             onClick={() => {
               setSymptom(id);
               setResult(null);
             }}
           >
-            {label}
+            {symptom === id ? "✓ " : ""}{label}
             <span>↗</span>
           </button>
         ))}
@@ -97,7 +100,7 @@ function AutopsyScreen() {
             {text}
             <select
               value={facts[id] ?? "unknown"}
-              onChange={(e) => setFacts({ ...facts, [id]: e.target.value })}
+              onChange={(e) => { setFacts({ ...facts, [id]: e.target.value }); setResult(null); }}
             >
               <option value="unknown">잘 모르겠어요</option>
               <option value="yes">네</option>
@@ -835,6 +838,7 @@ function WeatherScreen() {
   const [humidity, setHumidity] = useState(50);
   const [indoor, setIndoor] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [weatherError, setWeatherError] = useState("");
   const advice = weatherAdvice(temperature, humidity);
   return (
     <div className="science-sheet">
@@ -843,7 +847,7 @@ function WeatherScreen() {
       <div className="field-grid">
         <label className="field">
           도시 중심부 날씨
-          <select value={city} onChange={(e) => setCity(e.target.value)}>
+          <select value={city} disabled={busy} onChange={(e) => { setCity(e.target.value); setWeather(null); setWeatherError(""); }}>
             {[
               ["seoul", "서울"],
               ["busan", "부산"],
@@ -863,22 +867,23 @@ function WeatherScreen() {
           disabled={busy}
           onClick={async () => {
             setBusy(true);
-            const r = await act(() =>
-              api(`features/weather?profileId=${profileId}`, { city }),
-            );
-            if (r) {
+            setWeatherError("");
+            try {
+              const r = await loadCityWeather(city, () => api("features/weather", { city }));
               setWeather(r);
               if (!indoor) {
                 setTemperature(r.temperature);
                 setHumidity(r.humidity);
               }
-            }
-            setBusy(false);
+            } catch (error) {
+              setWeatherError(`${error instanceof Error ? error.message : "날씨를 가져오지 못했어요."} 실내 온습도를 직접 입력하거나 잠시 후 다시 시도해 주세요.`);
+            } finally { setBusy(false); }
           }}
         >
           {busy ? "가져오는 중…" : "실제 날씨 불러오기"}
         </button>
       </div>
+      {weatherError && <p className="notice error" role="alert">{weatherError}</p>}
       {weather && (
         <p className="small muted">
           {weather.cityName} 실외 모델 값 · 기준 {weather.weatherTime} · 수집{" "}
@@ -889,7 +894,7 @@ function WeatherScreen() {
         <input
           type="checkbox"
           checked={indoor}
-          onChange={(e) => setIndoor(e.target.checked)}
+          onChange={(e) => { setIndoor(e.target.checked); if (!e.target.checked && weather) { setTemperature(weather.temperature); setHumidity(weather.humidity); } }}
         />
         실내 온습도계로 직접 측정한 값을 사용해요
       </label>

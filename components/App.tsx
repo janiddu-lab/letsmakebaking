@@ -44,7 +44,7 @@ import { recommendationPantry, exclusionIds, bakeLink, savedCup, preparationChec
 import { KitchenJourney, RecipePreparation, PersonalSettings } from "./ConsumerExperience";
 import { LocaleProvider, LanguageSwitcher, PageTranslator, useLocale } from "./Locale";
 import { matchesLocalized } from "@/lib/locale";
-import { Tag, PageHeading, Empty, RecipeCard, SourceList } from "./ui";
+import { Tag, PageHeading, Empty, RecipeCard, SourceList, useInputDialog } from "./ui";
 import {
   calculateCost,
   convert,
@@ -94,7 +94,8 @@ export default function App() {
 function Shell() {
   useLocale();
   const pathname = usePathname();
-  const scienceTab = useSearchParams().get("tab") ?? "chemistry";
+  const params = useSearchParams();
+  const scienceTab = params.get("tab") ?? "chemistry";
   const { boot, profileId, setProfile } = useLab();
   const [mobile, setMobile] = useState(false);
   const [ai, setAi] = useState(false);
@@ -107,12 +108,12 @@ function Shell() {
     const parts = pathname.split("/");
     screen =
       parts[3] === "bake" ? (
-        <BakeScreen id={parts[2]} key={parts[2] + profileId} />
+        <BakeScreen id={parts[2]} key={parts[2] + profileId + params.toString()} />
       ) : (
         <RecipeDetail id={parts[2]} key={parts[2]} />
       );
   } else if (pathname === "/kitchen") screen = <Kitchen />;
-  else if (pathname === "/calculator") screen = <Calculator />;
+  else if (pathname === "/calculator") screen = <Calculator key={profileId + params.toString()} />;
   else if (pathname === "/science" || pathname === "/autopsy")
     screen = (
       <ScienceScreen
@@ -910,6 +911,7 @@ function Discover({ listOnly = false }: { listOnly?: boolean }) {
 
 // 재고·도구·구매 가격을 관리합니다. 예시 값은 사용자가 선택한 경우에만 추가됩니다.
 function Kitchen() {
+  const { confirm: askConfirm, prompt: askPrompt, dialog: inputDialog } = useInputDialog();
   const { boot, save, del, act, refresh, profileId, notify } = useLab();
   const c = boot!.catalog;
   const [ingredient, setIngredient] = useState(c.ingredients[0]?.id ?? "");
@@ -927,9 +929,9 @@ function Kitchen() {
   const [recognition, setRecognition] = useState("");
   async function sample() {
     if (
-      !confirm(
+      !(await askConfirm(
         "예시 재료·도구·가격을 기존 자료에 추가할까요? 실제 보유량이 아니며 나중에 수정할 수 있어요.",
-      )
+      ))
     )
       return;
     await act(async () => {
@@ -963,9 +965,9 @@ function Kitchen() {
   }
   async function scan(file: File) {
     if (
-      !confirm(
+      !(await askConfirm(
         "선택한 사진을 설정된 OpenAI API에 보내 후보 이름을 찾을까요? 비용이 발생할 수 있어요.",
-      )
+      ))
     )
       return;
     const form = new FormData();
@@ -991,6 +993,7 @@ function Kitchen() {
           </button>
         }
       />
+      {inputDialog}
       <div className="two-column">
         <section className="panel">
           <div className="panel-title">
@@ -1097,7 +1100,7 @@ function Kitchen() {
                 <button
                   className="text-button"
                   onClick={async () => {
-                    const n = prompt(
+                    const n = await askPrompt(
                       "남은 양을 입력하세요. 비워두면 양 미확인입니다.",
                       p.quantity === null ? "" : String(p.quantity),
                     );

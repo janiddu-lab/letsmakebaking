@@ -3025,3 +3025,17 @@ dialog::backdrop {
     display: none;
   }
 }
+
+/* 모바일에서도 선택 상태와 조작 영역을 유지하고 색상 외에 테두리와 텍스트를 제공합니다. */
+button[aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: 2px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid #5644ce; outline-offset: 3px; }
+dialog { max-width: min(600px, calc(100vw - 32px)); max-height: 85dvh; overflow: auto; }
+@media (max-width: 768px) {
+  body { font-size: 16px; }
+  main p, main .field, main li { font-size: 16px; }
+  button, .button, .chip, .icon-button, .science-tab-bar button { min-height: 44px; }
+  .icon-button { min-width: 44px; }
+  input:not([type="checkbox"]):not([type="range"]), select, textarea { min-height: 44px; font-size: 16px; }
+  .topbar .breadcrumb { display: none; }
+  .field-grid > *, .two-column > *, .main, .science-sheet { min-width: 0; }
+}

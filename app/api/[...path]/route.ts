@@ -265,7 +265,7 @@ async function handle(
     // 공개 AI는 방문자 질문·맥락만 처리하며 공용 프로필의 대화나 재고를 읽지 않습니다.
     if (publicDemo && key === "ai/chat") return answer(await askGemini(body, catalog()));
     if (key === "translations" && verb === "POST") return answer(await translatePublicPage(body));
-    if (!get("profiles", profileId))
+    if (!(publicDemo && ["features/pan", "features/weather"].includes(key)) && !get("profiles", profileId))
       throw new AppError("NOT_FOUND", "로컬 프로필이 없어요.", 404);
     const featureResponse = await featureApi(req, key, body, profileId, answer);
     if (featureResponse) return featureResponse;

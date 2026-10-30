@@ -23,7 +23,7 @@ export function photoUrl(id: string, profileId: string) {
   return browserMode ? browserKitchen.photo(id) : `/api/uploads/${encodeURIComponent(id)}?profileId=${encodeURIComponent(profileId)}`;
 }
 // 모든 변경 요청에 같은 위조 방지 토큰을 붙이고 서버 오류를 한국어로 전달합니다.
-export async function api(route: string, body?: any, method?: string, extraHeaders: Record<string, string> = {}) {
+export async function api(route: string, body?: any, method?: string, extraHeaders: Record<string, string> = {}, recovered = false): Promise<any> {
   if (browserMode && !route.startsWith("bootstrap")) {
     const local = await browserKitchen.request(route, body, method ?? (body === undefined ? "GET" : "POST"));
     if (local.handled) return local.data;
@@ -41,7 +41,14 @@ export async function api(route: string, body?: any, method?: string, extraHeade
       ? {}
       : { body: body instanceof FormData ? body : JSON.stringify(body) }),
   });
-  const json = await res.json();
+  let json;
+  try { json = await res.json(); } catch { throw new Error("서버가 시작 중이거나 연결이 끊겼어요. 잠시 후 다시 시도해 주세요."); }
+  // 재배포로 서버 토큰이 바뀐 경우에만 새 토큰으로 한 번 다시 요청합니다.
+  if (res.status === 403 && json.error?.code === "CSRF" && !recovered) {
+    const renewed = await fetch("/api/health");
+    const health = await renewed.json();
+    if (renewed.ok && health.meta?.csrfToken) { csrf = health.meta.csrfToken; return api(route, body, method, extraHeaders, true); }
+  }
   if (!res.ok)
     throw new Error(json.error?.message ?? "요청을 처리하지 못했어요.");
   if (json.meta?.csrfToken) csrf = json.meta.csrfToken;
@@ -98,7 +105,7 @@ export function LabProvider({ children }: { children: ReactNode }) {
     const update = () => { if (document.visibilityState === "visible") refresh().catch(() => {}); };
     document.addEventListener("visibilitychange", update);
     return () => document.removeEventListener("visibilitychange", update);
-  }, [profileId]);
+  }, [profileId, boot]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 5000);

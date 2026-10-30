@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, useId, type ReactNode } from "react";
 import Link from "next/link";
 import { Heart, ArrowUpRight, Clock3 } from "lucide-react";
 import { useLab, categories } from "./context";
@@ -143,6 +143,7 @@ export function Dialog({
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const headingId = useId();
   useEffect(() => {
     if (open && !ref.current?.open) ref.current?.showModal();
     if (!open && ref.current?.open) ref.current?.close();
@@ -150,13 +151,14 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
+      aria-labelledby={headingId}
       onCancel={onClose}
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
     >
       <div className="dialog-heading">
-        <h2>{title}</h2>
+        <h2 id={headingId}>{title}</h2>
         <button onClick={onClose} aria-label="닫기">
           ×
         </button>
@@ -164,4 +166,24 @@ export function Dialog({
       {children}
     </dialog>
   );
+}
+
+// 기본 confirm/prompt 대신 화면 안에서 확인·취소와 키보드 입력을 제공합니다.
+export function useInputDialog() {
+  const [request, setRequest] = useState<{ message: string; input: boolean } | null>(null);
+  const [value, setValue] = useState("");
+  const resolve = useRef<((result: string | null) => void) | null>(null);
+  const finish = (result: string | null) => { resolve.current?.(result); resolve.current = null; setRequest(null); };
+  useEffect(() => () => { resolve.current?.(null); }, []);
+  const ask = (message: string, input: boolean, initial = "") => new Promise<string | null>(done => { resolve.current?.(null); resolve.current = done; setValue(initial); setRequest({ message, input }); });
+  return {
+    confirm: async (message: string) => (await ask(message, false)) !== null,
+    prompt: (message: string, initial = "") => ask(message, true, initial),
+    dialog: <Dialog open={!!request} title={request?.input ? "내용 수정" : "변경 전 확인"} onClose={() => finish(null)}>
+      <form onSubmit={e => { e.preventDefault(); finish(request?.input ? value : "yes"); }}>
+        {request?.input ? <label className="field">{request.message}<input autoFocus value={value} onChange={e => setValue(e.target.value)} /></label> : <p className="pre-wrap">{request?.message}</p>}
+        <div className="row-actions"><button type="button" className="button outline" onClick={() => finish(null)}>취소</button><button className="button primary" type="submit">확인</button></div>
+      </form>
+    </Dialog>,
+  };
 }
