@@ -186,6 +186,7 @@ export const money = (n: number | null | undefined) =>
   n === null || n === undefined
     ? "미확인"
     : `${Math.round(n).toLocaleString("ko-KR")}원`;
+export const allergenName = (id: string) => ({ wheat: "밀", milk: "우유", egg: "달걀", soy: "대두", peanut: "땅콩", "tree-nut": "견과류", sesame: "참깨", oat: "귀리" }[id] ?? id);
 export const amount = (n: number | string | null | undefined) =>
   n === null || n === undefined
     ? "양 미확인"

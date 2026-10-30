@@ -20,7 +20,7 @@ import {
   MessageCircle,
   Mic,
 } from "lucide-react";
-import { useLab, api, categories, amount, photoUrl } from "./context";
+import { useLab, api, categories, amount, photoUrl, allergenName } from "./context";
 import { Dialog, Empty, PageHeading, SourceList, Tag } from "./ui";
 import { PracticalGuide } from "./PracticalGuide";
 const ModelViewer = dynamic(() => import("./ModelViewer"), { ssr: false });
@@ -371,7 +371,7 @@ export function LearnScreen({ id }: { id?: string }) {
               </p>
               <p>
                 표시된 알레르기 관련 성분:{" "}
-                {ing.allergens.join(", ") ||
+                {ing.allergens.map(allergenName).join(", ") ||
                   "사전 표기 없음. 제품 성분 확인 필요"}
               </p>
               <img

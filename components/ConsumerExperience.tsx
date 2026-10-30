@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useLab, api, amount } from "./context";
+import { useLab, api, amount, allergenName } from "./context";
 import { Empty, PageHeading } from "./ui";
 import { stockAmount } from "@/lib/domain";
 import type { Pantry, Recipe } from "@/lib/types";
@@ -47,7 +47,7 @@ export function RecipePreparation({ recipe }: { recipe: Recipe }) {
       <span><strong>{i.name}</strong> {amount(i.quantity)} {i.unit}<small>{i.stock.unknown ? "보유량 확인 필요" : i.missing ? `${amount(i.missing)} ${i.unit} 추가 준비` : "보유량 충분"}</small></span>
     </label>)}</div>
     <p role="status">계량 확인 {checked.length} / {items.length}</p>
-    {!!allergens.length && <p>재료 사전에 표시된 알레르기 관련 성분: <strong>{allergens.join(" · ")}</strong>. 실제 사용 제품의 성분표도 확인하세요.</p>}
+    {!!allergens.length && <p>재료 사전에 표시된 알레르기 관련 성분: <strong>{allergens.map(allergenName).join(" · ")}</strong>. 실제 사용 제품의 성분표도 확인하세요.</p>}
     {!!tools.length && <p className="notice">확인할 도구: {tools.map(id => c.equipment.find(t => t.id === id)?.name ?? id).join(" · ")} <Link href="/lab">대체 방법 찾기 ↗</Link></p>}
     <div className="row-actions"><button className="button outline" disabled={!missing.length || copying} onClick={async () => {
       setCopying(true);

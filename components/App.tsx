@@ -1148,7 +1148,7 @@ function Kitchen() {
             도구가 없다면? 대체 안내 보기 ↗
           </Link>
           <hr />
-          <h3>재료 사진으로 후보 찾기</h3>
+          {boot!.health.publicDemo ? <><h3>재료 이름이 헷갈리나요?</h3><p>재료 사전에서 별칭·역할·대체 조건을 확인하고 직접 선택할 수 있어요.</p><Link className="button outline" href="/learn?type=ingredient">재료 사전에서 찾기 →</Link></> : <><h3>재료 사진으로 후보 찾기</h3>
           <p className="small muted">
             종류와 수량은 직접 확인해야 해요. AI 키가 설정되어야 사용할 수
             있어요.
@@ -1161,6 +1161,7 @@ function Kitchen() {
             onChange={(e) => e.target.files?.[0] && scan(e.target.files[0])}
           />
           {recognition && <div className="notice pre-wrap">{recognition}</div>}
+          </>}
         </section>
       </div>
       <section className="panel space-top">
@@ -1474,7 +1475,7 @@ function RecipeDetail({ id }: { id: string }) {
           <section className="panel space-top">
             <h3>이번 베이킹의 원가</h3>
             <div className="cost-total">
-              {money(cost?.total)}
+              {money(cost?.lines.some((l: any) => l.cost !== null) ? cost.total : null)}
               <small>
                 {cost?.incomplete
                   ? "가격 확인된 재료의 부분합"
@@ -1482,7 +1483,7 @@ function RecipeDetail({ id }: { id: string }) {
               </small>
             </div>
             <p>
-              개당 {money(cost?.perItem)}
+              개당 {money(cost?.lines.some((l: any) => l.cost !== null) ? cost.perItem : null)}
               {cost?.incomplete ? " (부분합 기준)" : ""}
             </p>
             <p>
@@ -1891,7 +1892,7 @@ function Calculator() {
                     ? "확인된 사용 원가 부분합"
                     : "배치 사용 원가"}
                 </span>
-                <strong>{money(cost.total)}</strong>
+                <strong>{money(cost.lines.some((l: any) => l.cost !== null) || extras > 0 ? cost.total : null)}</strong>
                 <small>이미 가진 재료도 포함</small>
               </div>
               <div>
@@ -1899,7 +1900,7 @@ function Calculator() {
                   {tab === "shopping" ? "합산 원가" : "개당 원가"}
                   {cost.incomplete ? " (부분합)" : ""}
                 </span>
-                <strong>{money(cost.perItem)}</strong>
+                <strong>{money(cost.lines.some((l: any) => l.cost !== null) || extras > 0 ? cost.perItem : null)}</strong>
                 <small>
                   {tab === "shopping"
                     ? "서로 다른 메뉴의 개당 평균은 계산하지 않아요."
@@ -2064,6 +2065,7 @@ function BakeScreen({ id }: { id: string }) {
         }
       />
       <OvenSuggestion recipe={recipe} />
+      {scale !== 1 && !version && <p className="notice">현재 원본의 {amount(scale)}배 · 계획 {amount(recipe.yieldCount)}개입니다. 굽는 시간·온도는 자동으로 늘리지 않습니다. 원래 틀 크기와 반죽 높이를 확인하고 필요하면 여러 팬에 나눠 굽거나 <Link href="/science?tab=pan">팬 환산</Link>을 확인하세요.</p>}
       <LiveBake key={sessionId} recipe={recipe} sessionId={sessionId} />
       <div className="bake-layout">
         <section className="panel bake-stage">
