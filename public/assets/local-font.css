@@ -1,0 +1,2 @@
+/* 네트워크 없이도 시스템의 한국어 글꼴을 사용합니다. 외부 글꼴 요청이 없습니다. */
+@font-face{font-family:'BakingLocal';src:local('Malgun Gothic');font-weight:100 900;font-display:swap}

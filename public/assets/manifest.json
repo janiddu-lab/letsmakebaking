@@ -1,0 +1,333 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-29",
+  "notice": "모든 모델·삽화·도안은 직접 제작한 설명용 자산입니다. 실제 제조 결과나 물리 예측을 나타내지 않습니다.",
+  "assets": [
+    {
+      "id": "bread",
+      "kind": "illustration",
+      "path": "/assets/illustrations/bread.svg",
+      "byteSize": 1189,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "cake",
+      "kind": "illustration",
+      "path": "/assets/illustrations/cake.svg",
+      "byteSize": 1720,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "cookie",
+      "kind": "illustration",
+      "path": "/assets/illustrations/cookie.svg",
+      "byteSize": 1414,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "croissant",
+      "kind": "illustration",
+      "path": "/assets/illustrations/croissant.svg",
+      "byteSize": 1694,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "ingredient-roles",
+      "kind": "illustration",
+      "path": "/assets/illustrations/ingredient-roles.svg",
+      "byteSize": 1068,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "nobake",
+      "kind": "illustration",
+      "path": "/assets/illustrations/nobake.svg",
+      "byteSize": 1342,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "quick",
+      "kind": "illustration",
+      "path": "/assets/illustrations/quick.svg",
+      "byteSize": 1382,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "scone",
+      "kind": "illustration",
+      "path": "/assets/illustrations/scone.svg",
+      "byteSize": 1304,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "boule-poster",
+      "kind": "illustration",
+      "path": "/assets/models/boule-poster.svg",
+      "byteSize": 1189,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "boule",
+      "kind": "model",
+      "path": "/assets/models/boule.glb",
+      "byteSize": 93776,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "brioche-poster",
+      "kind": "illustration",
+      "path": "/assets/models/brioche-poster.svg",
+      "byteSize": 1189,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "brioche",
+      "kind": "model",
+      "path": "/assets/models/brioche.glb",
+      "byteSize": 138196,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "croissant-poster",
+      "kind": "illustration",
+      "path": "/assets/models/croissant-poster.svg",
+      "byteSize": 1694,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "croissant",
+      "kind": "model",
+      "path": "/assets/models/croissant.glb",
+      "byteSize": 232708,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "crumb-poster",
+      "kind": "illustration",
+      "path": "/assets/models/crumb-poster.svg",
+      "byteSize": 1189,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "crumb",
+      "kind": "model",
+      "path": "/assets/models/crumb.glb",
+      "byteSize": 198780,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "icing-poster",
+      "kind": "illustration",
+      "path": "/assets/models/icing-poster.svg",
+      "byteSize": 1720,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "icing",
+      "kind": "model",
+      "path": "/assets/models/icing.glb",
+      "byteSize": 371620,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "shaping-poster",
+      "kind": "illustration",
+      "path": "/assets/models/shaping-poster.svg",
+      "byteSize": 1189,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "shaping",
+      "kind": "model",
+      "path": "/assets/models/shaping.glb",
+      "byteSize": 71092,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "cookie-flower",
+      "kind": "template",
+      "path": "/assets/templates/cookie-flower.svg",
+      "byteSize": 1721,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "cookie-heart",
+      "kind": "template",
+      "path": "/assets/templates/cookie-heart.svg",
+      "byteSize": 1646,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "cookie-house",
+      "kind": "template",
+      "path": "/assets/templates/cookie-house.svg",
+      "byteSize": 1647,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    },
+    {
+      "id": "cookie-star",
+      "kind": "template",
+      "path": "/assets/templates/cookie-star.svg",
+      "byteSize": 1636,
+      "author": "우리집 베이킹랩 원본 제작",
+      "license": "CC0-1.0",
+      "sourceUrl": null,
+      "permittedUse": "직접 제작한 절차적 도형과 벡터 삽화. 외부 저작물 포함 없음.",
+      "reviewStatus": "ORIGINAL_ASSET",
+      "isPhotograph": false
+    }
+  ],
+  "models": [
+    {
+      "id": "boule",
+      "title": "둥근 빵",
+      "path": "/assets/models/boule.glb",
+      "poster": "/assets/models/boule-poster.svg"
+    },
+    {
+      "id": "brioche",
+      "title": "브리오슈",
+      "path": "/assets/models/brioche.glb",
+      "poster": "/assets/models/brioche-poster.svg"
+    },
+    {
+      "id": "croissant",
+      "title": "크루아상",
+      "path": "/assets/models/croissant.glb",
+      "poster": "/assets/models/croissant-poster.svg"
+    },
+    {
+      "id": "shaping",
+      "title": "성형 순서",
+      "path": "/assets/models/shaping.glb",
+      "poster": "/assets/models/shaping-poster.svg"
+    },
+    {
+      "id": "crumb",
+      "title": "빵 단면",
+      "path": "/assets/models/crumb.glb",
+      "poster": "/assets/models/crumb-poster.svg"
+    },
+    {
+      "id": "icing",
+      "title": "아이싱 케이크",
+      "path": "/assets/models/icing.glb",
+      "poster": "/assets/models/icing-poster.svg"
+    }
+  ]
+}

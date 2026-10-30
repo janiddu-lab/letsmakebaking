@@ -1,0 +1,19 @@
+# 무료 공유용 데모입니다. 개인 기록을 영구 저장하는 서비스 구성은 아닙니다.
+services:
+  - type: web
+    name: our-baking-lab
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: BAKING_PUBLIC_DEMO
+        value: "true"
+      - key: BAKING_DATA_DIR
+        value: /tmp/baking-demo-data
+      - key: TRENDS_AUTO
+        value: "false"
+      - key: BAKING_ENABLE_COLLECTION
+        value: "true"
+      - key: BAKING_COLLECTION_CODE
+        generateValue: true

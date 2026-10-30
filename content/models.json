@@ -1,0 +1,5 @@
+{
+  "home": "/assets/user-models/fantasy-cake.glb",
+  "models": [],
+  "note": "home에 /assets/user-models/내파일.glb 경로를 넣으면 공통 홈 모델이 바뀝니다. 파일은 public/assets/user-models에 둡니다. 웹의 파일 업로드와 선택은 프로필별 설정입니다."
+}

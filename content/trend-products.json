@@ -1,0 +1,32 @@
+{
+  "note": "제품명 정규화 사전입니다. 이 목록에 있다는 사실은 현재 유행한다는 뜻이 아닙니다. 순위는 실제 수집 게시물에서만 계산합니다.",
+  "products": [
+    {"name":"두쫀쿠","aliases":["두쫀쿠","두바이 쫀득 쿠키","두바이쫀득쿠키"]},
+    {"name":"상하이 버터떡","aliases":["상하이 버터떡","상해 버터떡","상하이버터떡"]},
+    {"name":"두바이 초콜릿","aliases":["두바이 초콜릿","dubai chocolate"]},
+    {"name":"소금빵","aliases":["소금빵","시오빵","salt bread"]},
+    {"name":"버터떡","aliases":["버터떡"]},
+    {"name":"휘낭시에","aliases":["휘낭시에","피낭시에","financier"]},
+    {"name":"크루아상","aliases":["크루아상","크로와상","croissant"]},
+    {"name":"크루키","aliases":["크루키","crookie"]},
+    {"name":"크로플","aliases":["크로플","croffle"]},
+    {"name":"쿠키","aliases":["쿠키","cookie","cookies"]},
+    {"name":"마들렌","aliases":["마들렌","madeleine"]},
+    {"name":"사워도우","aliases":["사워도우","sourdough"]},
+    {"name":"스콘","aliases":["스콘","scone","scones"]},
+    {"name":"베이글","aliases":["베이글","bagel","bagels"]},
+    {"name":"브라우니","aliases":["브라우니","brownie","brownies"]},
+    {"name":"치즈케이크","aliases":["치즈케이크","cheesecake"]},
+    {"name":"바스크 치즈케이크","aliases":["바스크 치즈케이크","바스크치케","basque cheesecake"]},
+    {"name":"치아바타","aliases":["치아바타","ciabatta"]},
+    {"name":"포카치아","aliases":["포카치아","focaccia"]},
+    {"name":"파운드케이크","aliases":["파운드케이크","pound cake"]},
+    {"name":"시나몬롤","aliases":["시나몬롤","cinnamon roll"]},
+    {"name":"에그타르트","aliases":["에그타르트","egg tart"]},
+    {"name":"까눌레","aliases":["까눌레","카눌레","canele","canelé"]},
+    {"name":"모찌쿠키","aliases":["모찌쿠키","모찌 쿠키","mochi cookie"]},
+    {"name":"티라미수","aliases":["티라미수","tiramisu"]},
+    {"name":"수건케이크","aliases":["수건케이크","수건 케이크"]},
+    {"name":"푸딩","aliases":["푸딩","pudding"]}
+  ]
+}
