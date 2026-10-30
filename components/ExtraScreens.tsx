@@ -474,7 +474,7 @@ export function LearnScreen({ id }: { id?: string }) {
   const equipmentNotes = c.equipment.map(e => {
     const alternatives = toolAlternatives(e.id, c);
     return { id: e.id, title: alternatives.length ? `${e.name} 없을 때` : e.name,
-      summary: alternatives.length ? `${e.name} → ${alternatives.map(a => a.name).join(" · ")}로 대체하기. 사용 순서와 가능한 작업을 확인하세요.` : "확인된 대체 방법이 아직 없어요. 전용 도구가 필요한 작업과 역할을 확인하세요.",
+      summary: alternatives.length ? `${e.name} → ${alternatives.map(a => `${a.name} (${a.when})`).join(" · ")}. 사용 순서와 제한 사항을 확인하세요.` : "확인된 대체 방법이 아직 없어요. 전용 도구가 필요한 작업과 역할을 확인하세요.",
       type: alternatives.length ? "도구 대체" : "도구 확인" };
   });
   const items =
@@ -486,7 +486,7 @@ export function LearnScreen({ id }: { id?: string }) {
           type: "재료 사전",
         }))
       : tab === "equipment"
-        ? equipmentNotes
+        ? equipmentNotes.filter(note => note.type === "도구 대체")
         : c.articles
             .filter((a) => tab === "all" || a.type === tab)
             .map((a) => ({
