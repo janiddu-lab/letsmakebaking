@@ -353,9 +353,9 @@ export function LearnScreen({ id }: { id?: string }) {
         <section className="panel article-body">
           <div className="panel-title">
             <Tag>{article?.category ?? (ing ? "재료 역할" : "도구 안내")}</Tag>
-            <button className="chip" onClick={() => setAdvanced(!advanced)}>
+            {!!article?.advanced.length && <button className="chip" onClick={() => setAdvanced(!advanced)}>
               {advanced ? "기본 설명" : "심화 설명 더 보기"}
-            </button>
+            </button>}
           </div>
           {article ? (
             article.body.map((line, i) => <p key={i}>{line}</p>)
@@ -389,7 +389,7 @@ export function LearnScreen({ id }: { id?: string }) {
               <p>실제 내열·식품 접촉 조건은 제품 표시를 확인해 주세요.</p>
             </>
           )}
-          {article && <PracticalGuide key={article.id} id={article.id} />}
+          {article && article.id !== "basic-volume" && <PracticalGuide key={article.id} id={article.id} />}
           {article?.id === "basic-volume" && <CupWorkshop key={boot!.profile.id} />}
           {(ing || tool) && <div className="space-top"><h3>이 재료·도구의 대체 방법</h3>{c.substitutions.filter(r => r.fromId === (ing?.id ?? tool?.id)).map(r => <details key={r.id}><summary>{r.description}</summary><p>적용 조건: {r.conditions}</p><p>바꿀 과정: {r.changes}</p><p>주의할 한계: {r.limits}</p></details>)}<Link className="inline-link" href="/lab">레시피를 선택해 대체 배합 확인하기 →</Link></div>}
           {advanced &&
