@@ -2123,12 +2123,14 @@ function BakeScreen({ id }: { id: string }) {
             <button
               className="button outline"
               onClick={() => {
+                const startedAt = Date.now();
+                setNow(startedAt);
                 const next = [
                   ...timers,
                   {
                     id: crypto.randomUUID(),
                     label: `${step + 1}단계`,
-                    endAt: Date.now() + recipe.steps[step].timerMin! * 60000,
+                    endAt: startedAt + recipe.steps[step].timerMin! * 60000,
                   },
                 ];
                 setTimers(next);

@@ -6,8 +6,11 @@ const bakingContext = /제과|제빵|홈베이킹|베이킹|베이커리|디저�
 
 export function isBakingRelated(text: string): boolean {
   if (offTopic.test(text)) return false;
+  // '빵구'·뉴스 이름·닮은꼴 비유를 새 디저트 이름으로 세지 않습니다.
+  if (/빵구|빵꾸|보안빵|쿠키뉴스|붕어빵.{0,25}(?:남획|닮은|닮았|똑같)/i.test(text)) return false;
   const names = productNames(text);
-  return !!(names.products.length || names.candidates.length || bakingContext.test(text));
+  const breadContext = /빵.{0,24}(?:구웠|굽기|반죽|레시피|먹었|먹어|샀|맛있|만들|사왔)|(?:구운|수제).{0,16}빵/;
+  return !!(names.products.length || bakingContext.test(text) || (names.candidates.length && breadContext.test(text)));
 }
 
 const allowedTags = new Set([
