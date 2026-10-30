@@ -120,11 +120,11 @@ export function SourceList({ ids }: { ids: string[] }) {
       </p>
       {ids.map((id) => {
         const source = boot?.catalog.sources.find((s) => s.id === id);
-        return source ? (
+        return source && /^https?:\/\//.test(source.url) ? (
           <a key={id} href={source.url} target="_blank" rel="noreferrer">
             {source.title} ↗
           </a>
-        ) : (
+        ) : source ? <p key={id}>{source.title} · 자체 제작 자료</p> : (
           <span key={id}>근거 자료 확인 필요</span>
         );
       })}
