@@ -19,7 +19,7 @@ export function publicDemoAllows(key: string, method: string) {
       || /^recipes(?:\/[a-zA-Z0-9_-]+)?$/.test(key)
       || /^articles(?:\/[a-zA-Z0-9_-]+)?$/.test(key);
   }
-  return method === "POST" && ["matches", "calculations", "features/pan", "features/autopsy", "features/weather", "ai/chat"].includes(key);
+  return method === "POST" && ["matches", "calculations", "features/pan", "features/autopsy", "features/weather", "ai/chat", "translations"].includes(key);
 }
 
 

@@ -24,6 +24,9 @@ import { useLab, api, categories, amount, photoUrl, allergenName } from "./conte
 import { Dialog, Empty, PageHeading, SourceList, Tag } from "./ui";
 import { PracticalGuide } from "./PracticalGuide";
 import CupWorkshop from "./CupWorkshop";
+import AiPageLinks from "./AiPageLinks";
+import { siteActions } from "@/lib/site-navigation";
+import { useLocale } from "./Locale";
 const ModelViewer = dynamic(() => import("./ModelViewer"), { ssr: false });
 
 // 수분 슬라이더는 원리를 설명하는 예시이며 실제 빵의 완성 모양을 예측하지 않습니다.
@@ -1761,11 +1764,13 @@ export function AdminScreen() {
 // API 키는 이 화면에 오지 않습니다. 질문과 동의만 로컬 서버에 전달합니다.
 export function AiPanel({ onClose }: { onClose: () => void }) {
   const { boot, profileId, act, notify } = useLab();
+  const { language, t } = useLocale();
   const [text, setText] = useState("");
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [sessionId] = useState(() => crypto.randomUUID());
+  const pageSuggestions = siteActions(text, boot!.catalog);
   async function submit() {
     if (!text.trim() || busy || !consent || !boot!.health.ai) return;
     const message = text;
@@ -1781,6 +1786,7 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
         sessionId,
         recipeId,
         consent,
+        language,
         history: messages.filter(m => m.role === "user" || m.role === "assistant").slice(-6).map(m => ({ role: m.role, content: String(m.answer).slice(0, 5000) })),
       });
       setMessages((m) => [...m, { role: "assistant", ...response }]);
@@ -1874,8 +1880,8 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
                 }
               >
                 {m.responseKind === "GROUNDED_GUIDANCE"
-                  ? "자료 근거가 있는 설명"
-                  : "근거 추가 확인 필요"}
+                  ? t("자료 근거가 있는 설명")
+                  : t("근거 추가 확인 필요")}
               </Tag>
             )}
             {m.refs?.map((r: any) => (
@@ -1886,11 +1892,13 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
                     : `/learn/${r.id}`
                 }
                 className="chat-source"
+                onClick={onClose}
                 key={r.id}
               >
-                {r.title} ↗
+                {t(r.title)} ↗
               </Link>
             ))}
+            {m.actions && <AiPageLinks actions={m.actions} onNavigate={onClose} />}
             {m.uncertainties?.map((s: string) => (
               <p className="small muted" key={s}>
                 {s}
@@ -1901,6 +1909,7 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
         ))}
         {busy && <p className="muted">자료를 찾아 설명하고 있어요…</p>}
       </div>
+      <AiPageLinks actions={pageSuggestions} onNavigate={onClose} />
       <form
         className="ai-composer"
         onSubmit={(e) => {
@@ -1923,7 +1932,6 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
             maxLength={4000}
             onChange={(e) => setText(e.target.value)}
             placeholder="궁금한 점을 적어주세요"
-            disabled={!boot!.health.ai}
           />
           <button
             type="button"

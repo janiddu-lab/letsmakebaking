@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev:local": "next dev --hostname 127.0.0.1 --port 3210",
+    "prebuild": "node scripts/generate-interface-texts.mjs",
     "build": "next build",
     "start:local": "next start --hostname 127.0.0.1 --port 3210",
     "db:setup": "tsx scripts/setup.ts",

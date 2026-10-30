@@ -42,6 +42,8 @@ import {
 } from "./context";
 import { recommendationPantry, exclusionIds, bakeLink, savedCup, preparationChecks } from "@/lib/consumer-flow";
 import { KitchenJourney, RecipePreparation, PersonalSettings } from "./ConsumerExperience";
+import { LocaleProvider, LanguageSwitcher, PageTranslator, useLocale } from "./Locale";
+import { matchesLocalized } from "@/lib/locale";
 import { Tag, PageHeading, Empty, RecipeCard, SourceList } from "./ui";
 import {
   calculateCost,
@@ -83,13 +85,14 @@ const nav = [
 ] as const;
 export default function App() {
   return (
-    <LabProvider>
+    <LocaleProvider><LabProvider>
       <Shell />
-    </LabProvider>
+    </LabProvider></LocaleProvider>
   );
 }
 // 현재 주소에 맞는 화면을 선택하고 공통 메뉴·프로필·AI 패널을 배치합니다.
 function Shell() {
+  useLocale();
   const pathname = usePathname();
   const scienceTab = useSearchParams().get("tab") ?? "chemistry";
   const { boot, profileId, setProfile } = useLab();
@@ -218,6 +221,7 @@ function Shell() {
             </span>
           </span>
           <div className="topbar-right">
+            <LanguageSwitcher />
             <span className="local-badge">
               <i />
               {boot?.health.publicDemo ? "내 브라우저에 저장" : "로컬 작업실"}
@@ -252,6 +256,7 @@ function Shell() {
             </div>
           )}
         </main>
+        <PageTranslator />
         <footer>
           우리집 베이킹랩{" "}
           <span>직접 만든 삽화와 3D로 배우는 베이킹 · {boot?.health.publicDemo ? "나의 기록은 이 브라우저에 저장됩니다." : "로컬에 저장됩니다."}</span>
@@ -591,13 +596,13 @@ function Discover({ listOnly = false }: { listOnly?: boolean }) {
           targetRecipe?.ingredients.some((x) => x.id === i.id),
         )
       : c.ingredients.filter((i) =>
-          (i.name + i.aliases.join("")).includes(ingredientQuery),
+          matchesLocalized(i.name, ingredientQuery) || i.aliases.some(a => matchesLocalized(a, ingredientQuery)),
         );
   const cards = listOnly ? c.recipes : results.map((r) => r.recipe);
   const displayed = cards.filter(
     (r) =>
       (category === "all" || r.category === category) &&
-      (r.title + r.tags.join("")).includes(query),
+      (matchesLocalized(r.title, query) || r.tags.some((tag: string) => matchesLocalized(tag, query))),
   );
   return (
     <>

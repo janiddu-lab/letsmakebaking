@@ -1561,3 +1561,16 @@ h4,
 @media (max-width:900px) { .journey-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width:560px) { .journey-grid,.preparation-list { grid-template-columns:1fr; } .journey-card { padding:14px; } }
 @media print { .sidebar,.topbar,.ai-fab,.consumer-journey,.toast,.save-button,.preparation .row-actions { display:none!important; } .workspace { margin-left:0!important; } .recipe-layout { display:block!important; } .main { padding:10px!important; max-width:100%!important; } .panel { break-inside:avoid; } button { display:none!important; } a { text-decoration:none; } }
+
+/* 언어 선택과 질문에서 실제 기능으로 이동하는 카드 */
+.language-switcher { display:flex; gap:5px; align-items:center; font-size:14px; }
+.language-switcher select { min-width:88px; max-width:125px; padding:6px 8px; border:1px solid var(--line); border-radius:9px; background:var(--card); }
+.translation-status { margin:0 28px 15px; padding:8px 12px; background:#f2effa; border-radius:9px; font-size:12px; color:var(--muted); }
+.ai-page-links { display:grid; gap:8px; padding:12px; border:1px solid #cec8eb; border-radius:12px; background:#f2effa; margin:10px; }
+.ai-page-links > strong { font-size:12px; }
+.ai-page-links > a { display:flex; flex-direction:column; gap:4px; background:var(--card); border:1px solid var(--line); padding:10px 12px; border-radius:9px; text-decoration:none; }
+.ai-page-links > a:hover { border-color:var(--ink); }
+.ai-page-links > a > span { font-weight:700; font-size:14px; }
+.ai-page-links small { color:var(--muted); font-size:12px; }
+.ai-panel > .ai-page-links { margin:0 12px 8px; flex-shrink:0; max-height:190px; overflow:auto; }
+@media (max-width:600px) { .topbar-right { gap:8px; } .local-badge { display:none; } .language-switcher select { max-width:100px; } .translation-status { margin:0 14px 10px; } }

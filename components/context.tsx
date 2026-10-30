@@ -187,7 +187,7 @@ export const categories: Record<string, string> = {
 export const money = (n: number | null | undefined) =>
   n === null || n === undefined
     ? "미확인"
-    : `${Math.round(n).toLocaleString("ko-KR")}원`;
+    : typeof document !== "undefined" && ["en", "ja"].includes(document.documentElement.lang) ? new Intl.NumberFormat(document.documentElement.lang, { style: "currency", currency: "KRW", currencyDisplay: "code", maximumFractionDigits: 0 }).format(n) : `${Math.round(n).toLocaleString("ko-KR")}원`;
 export const allergenName = (id: string) => ({ wheat: "밀", milk: "우유", egg: "달걀", soy: "대두", peanut: "땅콩", "tree-nut": "견과류", sesame: "참깨", oat: "귀리" }[id] ?? id);
 export const amount = (n: number | string | null | undefined) =>
   n === null || n === undefined
