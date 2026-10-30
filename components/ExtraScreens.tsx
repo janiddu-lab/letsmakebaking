@@ -26,6 +26,7 @@ import { useLab, api, categories, amount, photoUrl, allergenName } from "./conte
 import { Dialog, Empty, PageHeading, SourceList, Tag, useInputDialog } from "./ui";
 import { PracticalGuide } from "./PracticalGuide";
 import CupWorkshop from "./CupWorkshop";
+import ToolAlternatives from "./ToolAlternatives";
 import AiPageLinks from "./AiPageLinks";
 import { siteActions, replyNavigation } from "@/lib/site-navigation";
 import { useLocale } from "./Locale";
@@ -340,7 +341,7 @@ export function LearnScreen({ id }: { id?: string }) {
   if (id) {
     const article = c.articles.find((a) => a.id === id);
     const ing = c.ingredients.find((i) => i.id === id);
-    const tool = c.equipment.find((e) => e.id === id);
+    const tool = c.equipment.find((e) => e.id === id || article?.id === `equipment-${e.id}`);
     if (!article && !ing && !tool)
       return <Empty title="자료를 찾을 수 없어요" />;
     return (
@@ -350,19 +351,22 @@ export function LearnScreen({ id }: { id?: string }) {
         </Link>
         <PageHeading
           eyebrow="BAKING NOTEBOOK"
-          title={article?.title ?? ing?.name ?? tool!.name}
+          title={tool ? `${tool.name}, 집에 있는 것으로 대신하기` : article?.title ?? ing?.name ?? "대체 안내"}
           description={
-            article?.summary ?? ing?.description ?? tool?.description
+            tool ? "어떤 물건으로, 어떤 작업까지 가능한지 먼저 확인하세요." : article?.summary ?? ing?.description ?? ""
           }
         />
+        {tool && <ToolAlternatives tool={tool} />}
         <section className="panel article-body">
           <div className="panel-title">
-            <Tag>{article?.category ?? (ing ? "재료 역할" : "도구 안내")}</Tag>
+            <Tag>{tool ? "도구 역할과 참고 자료" : article?.category ?? (ing ? "재료 역할" : "도구 안내")}</Tag>
             {!!article?.advanced.length && <button className="chip" onClick={() => setAdvanced(!advanced)}>
               {advanced ? "기본 설명" : "심화 설명 더 보기"}
             </button>}
           </div>
-          {article ? (
+          {tool ? (
+            <details><summary>원래 도구의 역할 설명</summary>{(article?.body ?? [tool.description]).map((line, i) => <p key={i}>{line}</p>)}</details>
+          ) : article ? (
             article.body.map((line, i) => <p key={i}>{line}</p>)
           ) : ing ? (
             <>
@@ -396,7 +400,7 @@ export function LearnScreen({ id }: { id?: string }) {
           )}
           {article && article.id !== "basic-volume" && <PracticalGuide key={article.id} id={article.id} />}
           {article?.id === "basic-volume" && <CupWorkshop key={boot!.profile.id} />}
-          {(ing || tool) && <div className="space-top"><h3>이 재료·도구의 대체 방법</h3>{c.substitutions.filter(r => r.fromId === (ing?.id ?? tool?.id)).map(r => <details key={r.id}><summary>{r.description}</summary><p>적용 조건: {r.conditions}</p><p>바꿀 과정: {r.changes}</p><p>주의할 한계: {r.limits}</p></details>)}<Link className="inline-link" href="/lab">레시피를 선택해 대체 배합 확인하기 →</Link></div>}
+          {ing && <div className="space-top"><h3>이 재료의 대체 방법</h3>{c.substitutions.filter(r => r.fromId === ing.id).map(r => <details key={r.id}><summary>{r.description}</summary><p>적용 조건: {r.conditions}</p><p>바꿀 과정: {r.changes}</p><p>주의할 한계: {r.limits}</p></details>)}<Link className="inline-link" href="/lab">레시피를 선택해 대체 배합 확인하기 →</Link></div>}
           {advanced &&
             article?.advanced.map((line, i) => (
               <p className="advanced-note" key={i}>

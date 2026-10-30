@@ -198,14 +198,19 @@ export async function crawlYoutubeQuery(query: string, since: string, until: str
   return parseYoutube(await publicHtml(`https://www.youtube.com/results?${params}`), since, until);
 }
 
-export async function crawlInstagram(urls: string[] = [], query = "베이킹") {
+export async function crawlInstagram(urls: string[] = [], query = "베이킹", observer?: import("./collection-live").CollectionObserver, demo = false) {
+  if (demo) {
+    const { renderInstagram } = await import("./instagram-renderer");
+    return renderInstagram(query, urls, observer, true);
+  }
+  observer?.({ stage: "query", message: "Instagram 공개 HTML에서 캡션과 날짜를 확인합니다.", platform: "instagram", query });
   const targets = [...new Set(urls.map(instagramUrl))].slice(0, 8);
   if (!targets.length) targets.push(`https://www.instagram.com/explore/tags/${encodeURIComponent(query)}/`);
   const results = await Promise.allSettled(targets.map(async (url) => parseInstagram(await publicHtml(url), url)));
   const posts = results.flatMap((r) => r.status === "fulfilled" ? r.value : []);
   if (!posts.length) {
     const { renderInstagram } = await import("./instagram-renderer");
-    return renderInstagram(query, urls);
+    return renderInstagram(query, urls, observer);
   }
   return { posts, warnings: results.some((r) => r.status === "rejected" || !r.value.length) ? ["Instagram 일부 페이지는 공개 데이터가 없어 제외했어요."] : [] };
 }

@@ -3061,3 +3061,36 @@ dialog { max-width: min(600px, calc(100vw - 32px)); max-height: 85dvh; overflow:
   .weather-candidates, .weather-plan-grid { grid-template-columns: 1fr; }
   .weather-plan-card, .weather-proof { padding: 16px; }
 }
+/* 실제 수집 화면과 이미 촬영된 다시보기를 구분합니다. */
+.collection-live { margin: 26px 0; padding: 24px; background: #eee7ff; border: 2px solid #35304c; border-radius: 20px; box-shadow: 5px 5px 0 #bfb0e6; }
+.collection-live-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.collection-live h2 { margin: 8px 0; font-size: 25px; }
+.live-label { display: inline-block; background: #dff69b; border: 1px solid #48413c; padding: 4px 10px; border-radius: 20px; font-weight: 800; }
+.live-label.replay { background: #ffdfaa; }
+.crawl-browser { overflow: hidden; border: 2px solid #393247; border-radius: 14px; background: #fff; margin-top: 18px; }
+.crawl-address { display: flex; align-items: center; gap: 12px; padding: 12px; background: #29243d; color: #eee7ff; }
+.crawl-address > span { color: #f7be88; white-space: nowrap; font-size: 10px; }
+.crawl-address code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background: transparent; color: inherit; font-size: 12px; }
+.crawl-address b { white-space: nowrap; font-size: 11px; }
+.crawl-frame { width: 100%; aspect-ratio: 8/5; object-fit: contain; display: block; background: #f7f7f7; }
+.crawl-await { min-height: 260px; padding: 40px 20px; text-align: center; display: grid; place-content: center; }
+.crawl-await > span { font-size: 42px; }
+.crawl-frame-caption { padding: 10px 14px; background: #fcf8e8; font-size: 12px; }
+.crawl-playback { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 16px 0; }
+.crawl-playback label { display: flex; gap: 8px; align-items: center; }
+.crawl-events { max-height: 260px; overflow: auto; border-radius: 12px; background: #27263c; color: #f5f2e6; }
+.crawl-events article { display: flex; gap: 16px; padding: 14px; border-bottom: 1px solid #ffffff22; }
+.crawl-events time { font-size: 11px; color: #b9df96; white-space: nowrap; }
+.crawl-events strong { font-size: 13px; }
+.crawl-events p { font-size: 12px; margin: 8px 0; }
+.crawl-events small { color: #eed891; }
+.tool-alternatives { margin: 24px 0; }
+.tool-swap-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); gap: 20px; }
+.tool-swap-card { border: 2px solid #40374d; border-radius: 18px; padding: 24px; background: #fffdf2; box-shadow: 4px 4px 0 #dfd4e9; min-width: 0; }
+.tool-swap-arrow { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: #e9e0ff; padding: 14px; border-radius: 12px; margin-bottom: 18px; }
+.tool-swap-arrow > strong { font-size: 21px; }
+.tool-swap-arrow > span { font-size: 14px; }
+.tool-swap-card ol { padding-left: 22px; }
+.tool-swap-card li { margin-bottom: 12px; line-height: 1.8; }
+.tool-swap-card h3 { font-size: 17px; margin-top: 22px; }
+@media (max-width:768px) { .collection-live { padding: 16px; } .collection-live-heading { align-items: flex-start; flex-direction: column; } .crawl-address { gap: 6px; padding: 10px; } .crawl-address code { font-size: 10px; } .crawl-address b { font-size: 10px; } .crawl-events article { gap: 8px; flex-direction: column; } .tool-swap-card { padding: 18px; } }

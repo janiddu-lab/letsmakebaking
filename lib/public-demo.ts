@@ -15,7 +15,7 @@ export function requestHostAllowed(host: string | null, publicDemo: boolean, hos
 // 공유용 공개 배포는 별도 DB를 사용하고 새 수집은 별도 코드로 보호합니다. 로컬 버전에는 적용되지 않습니다.
 export function publicDemoAllows(key: string, method: string) {
   if (["GET", "HEAD"].includes(method)) {
-    return ["health", "bootstrap", "challenges", "trends", "features/social", "features/twins"].includes(key)
+    return ["health", "bootstrap", "challenges", "trends", "features/social", "features/social/live", "features/twins"].includes(key)
       || /^recipes(?:\/[a-zA-Z0-9_-]+)?$/.test(key)
       || /^articles(?:\/[a-zA-Z0-9_-]+)?$/.test(key);
   }

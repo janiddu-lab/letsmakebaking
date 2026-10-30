@@ -9,6 +9,7 @@ import { autopsy, panPlan, summarizeTwins } from "./science";
 import { fetchCityWeather, weatherCities } from "./weather";
 import { collectSocial, latestSocial } from "./social-trends";
 import { activeSocialJob, startSocialJob, stepSocialJob } from "./social-job";
+import { readCollectionLive } from "./collection-live";
 
 const positive = z.coerce.number().finite().positive();
 // 날씨는 도시별 공통 자료만 캐시합니다. 방문자의 개인 기록은 공개 서버 DB에 쓰지 않습니다.
@@ -98,8 +99,13 @@ export async function featureApi(
     });
   }
   if (key === "features/social/start") {
-    const input = z.object({ platforms: z.array(z.enum(["bluesky", "youtube", "instagram"])).min(1), instagramUrls: z.array(z.string().max(500)).max(8).default([]) }).parse(body);
-    return answer({ job: startSocialJob(input.platforms, input.instagramUrls) });
+    const input = z.object({ platforms: z.array(z.enum(["bluesky", "youtube", "instagram"])).min(1), instagramUrls: z.array(z.string().max(500)).max(8).default([]), demoBrowser: z.boolean().default(true) }).parse(body);
+    return answer({ job: startSocialJob(input.platforms, input.instagramUrls, input.demoBrowser) });
+  }
+  if (key === "features/social/live" && req.method === "GET") {
+    const jobId = z.string().uuid().parse(req.nextUrl.searchParams.get("jobId"));
+    const after = Number(req.nextUrl.searchParams.get("after") ?? -1);
+    return answer(readCollectionLive(jobId, Number.isFinite(after) && after >= 0 ? after : undefined, req.nextUrl.searchParams.get("frames") === "1"));
   }
   if (key === "features/social/step") {
     const input = z.object({ jobId: z.string().uuid(), stop: z.boolean().default(false) }).parse(body);

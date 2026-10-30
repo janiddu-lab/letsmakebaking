@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { api, useLab } from "./context";
 import { Empty, PageHeading, Tag } from "./ui";
+import CollectionLive from "./CollectionLive";
 
 export default function SocialTrends() {
   const { act, boot } = useLab();
@@ -13,6 +14,7 @@ export default function SocialTrends() {
   const [platforms, setPlatforms] = useState(["bluesky", "youtube", "instagram"]);
   const [instagramUrls, setInstagramUrls] = useState("");
   const [busy, setBusy] = useState(false);
+  const [demoBrowser, setDemoBrowser] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
   const [selectionKind, setSelectionKind] = useState<"product" | "hashtag">("product");
   const [loadError, setLoadError] = useState("");
@@ -35,7 +37,7 @@ export default function SocialTrends() {
     continueRef.current = true;
     try {
       let value = await api("features/social/start", {
-        platforms, instagramUrls: instagramUrls.split(/\s+/).map((s) => s.trim()).filter(Boolean),
+        platforms, instagramUrls: instagramUrls.split(/\s+/).map((s) => s.trim()).filter(Boolean), demoBrowser,
       }, "POST", collectionHeaders);
       setJob(value.job);
       while (continueRef.current && value.job.status === "running") {
@@ -104,6 +106,7 @@ export default function SocialTrends() {
           <b>↗</b>
         </div>
       </section>
+      <CollectionLive jobId={job?.id} active={busy} demo={demoBrowser} setDemo={setDemoBrowser} />
       {job && <section className="notice" aria-live="polite">
         <strong>중복 제거 {job.collected.toLocaleString()} / {job.target.toLocaleString()}개 · {job.day} 자료 {job.todayCount.toLocaleString()}개</strong>
         <div><progress value={Math.min(job.collected, job.target)} max={job.target} aria-label="게시물 수집 진행률" /></div>
