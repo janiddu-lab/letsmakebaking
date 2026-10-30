@@ -1419,7 +1419,7 @@ function RecipeDetail({ id }: { id: string }) {
               시간을 같은 비율로 바꾸지 않아요.
             </p>
             {base.unitConvention && <p className="notice small">계량 기준: {base.unitConvention}</p>}
-            <Link href={`/calculator?tab=unit&recipe=${base.id}`} className="inline-link">
+            <Link href={`/calculator?tab=unit&recipe=${base.id}&ingredient=${recipe.ingredients[0].id}&amount=${recipe.ingredients[0].quantity}&from=${recipe.ingredients[0].unit}`} className="inline-link">
               컵·숟가락·팬 크기 계산하기 ↗
             </Link>
           </section>
@@ -1907,8 +1907,8 @@ function Calculator() {
               </div>
               <div>
                 <span>
-                  {tab === "shopping" ? "합산 원가" : "개당 원가"}
-                  {cost.incomplete ? " (부분합)" : ""}
+                  {tab === "shopping" ? "선택한 메뉴" : "개당 원가"}
+                  {tab !== "shopping" && cost.incomplete ? " (부분합)" : ""}
                 </span>
                 <strong>{tab === "shopping" ? `${basket.length}개 메뉴` : money(cost.lines.some((l: any) => l.cost !== null) || extras > 0 ? cost.perItem : null)}</strong>
                 <small>
