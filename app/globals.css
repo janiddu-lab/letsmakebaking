@@ -3046,12 +3046,6 @@ dialog { max-width: min(600px, calc(100vw - 32px)); max-height: 85dvh; overflow:
 }
 
 /* 화면 안에서 다음 행동과 준비 사항을 비교합니다. */
-.site-ai-search { margin: 18px 40px 0; padding: 14px 18px; border: 1px solid #ded6ca; border-radius: 14px; background: #fffdf4; }
-.site-ai-search label { display: block; font-weight: 700; margin-bottom: 7px; }
-.site-ai-search > div { display: flex; gap: 10px; }
-.site-ai-search input { flex: 1; min-width: 0; }
-.ai-panel.ai-inline { position: static; width: 100%; max-width: 1000px; height: auto; min-height: 560px; max-height: none; margin: 0 auto; z-index: auto; box-shadow: none; }
-.ai-inline .ai-messages { min-height: 200px; max-height: none; overflow: visible; }
 .weather-environment { padding-bottom: 20px; border-bottom: 1px solid #ded6ca; }
 .weather-advisor > section { margin-top: 28px; }
 .weather-candidates, .weather-plan-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
@@ -3064,9 +3058,6 @@ dialog { max-width: min(600px, calc(100vw - 32px)); max-height: 85dvh; overflow:
 .weather-proof { margin: 20px 0; background: #f5f8dd; }
 .recipe-weather-context { margin: 20px 0; }
 @media (max-width: 768px) {
-  .site-ai-search { margin: 14px 18px 0; }
-  .site-ai-search > div { flex-direction: column; }
   .weather-candidates, .weather-plan-grid { grid-template-columns: 1fr; }
   .weather-plan-card, .weather-proof { padding: 16px; }
-  .ai-panel.ai-inline { min-height: 450px; }
 }

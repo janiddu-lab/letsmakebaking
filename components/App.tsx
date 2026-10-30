@@ -2,8 +2,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useRouter } from "next/navigation";
-import { siteActions } from "@/lib/site-navigation";
 import { RecipeWeatherContext } from "./WeatherAdvisor";
 import dynamic from "next/dynamic";
 import {
@@ -98,15 +96,15 @@ function Shell() {
   useLocale();
   const pathname = usePathname();
   const params = useSearchParams();
-  const router = useRouter();
-  const [siteQuery, setSiteQuery] = useState("");
   const scienceTab = params.get("tab") ?? "chemistry";
   const { boot, profileId, setProfile } = useLab();
   const [mobile, setMobile] = useState(false);
+  const [ai, setAi] = useState(pathname === "/ask");
+  useEffect(() => { if (pathname === "/ask") setAi(true); }, [pathname]);
   useEffect(() => setMobile(false), [pathname]);
   let screen;
   if (pathname === "/") screen = <Home />;
-  else if (pathname === "/ask") screen = <><PageHeading eyebrow="ASK & GO" title="물어보고, 바로 시작해요" description="사이트에 있는 내용은 해당 페이지로 바로 이동해요. 추가 설명이 필요하면 여기에서 AI에게 물어보세요." /><AiPanel key={params.get("q") ?? "ask"} inline initialQuestion={params.get("q") ?? ""} onClose={() => {}} /></>;
+  else if (pathname === "/ask") screen = <Home />;
   else if (pathname === "/discover" || pathname === "/recipes")
     screen = <Discover listOnly={pathname === "/recipes"} />;
   else if (pathname.startsWith("/recipes/")) {
@@ -250,9 +248,6 @@ function Shell() {
             </label>
           </div>
         </header>
-        <form className="site-ai-search" role="search" onSubmit={e => { e.preventDefault(); const q = siteQuery.trim(); if (!q) return; const action = siteActions(q, boot!.catalog)[0]; setSiteQuery(""); router.push(action?.href ?? `/ask?q=${encodeURIComponent(q)}`); }}>
-          <label htmlFor="site-ai-query">베이킹 물어보기</label><div><input id="site-ai-query" aria-label="사이트 AI 검색" value={siteQuery} onChange={e => setSiteQuery(e.target.value)} placeholder="컵 계량, 원가, 쿠키가 퍼졌어요…" maxLength={4000} disabled={!boot} /><button className="button primary" disabled={!boot || !siteQuery.trim()}>검색하고 이동 →</button></div>
-        </form>
         <PageTranslator />
         <main id="main" className="main">
           {boot?.health.publicDemo && <p className="notice">나의 재료·가격·즐겨찾기·사진·완성 기록은 이 브라우저에 저장돼요. <Link href="/settings">기록 백업하기 ↗</Link></p>}
@@ -272,12 +267,14 @@ function Shell() {
           <Link href="/learn">출처와 콘텐츠 안내 ↗</Link>
         </footer>
       </div>
-      {boot && <Link href="/ask"
+      {boot && <button
         className="ai-fab"
-        aria-label="베이킹 AI 검색 페이지"
+        onClick={() => setAi(!ai)}
+        aria-label="베이킹 AI 코치 열기"
       >
-        <Sparkles size={20} /><span>베이킹 AI 검색</span>
-      </Link>}
+        {ai ? <X size={20} /> : <Sparkles size={20} />}<span>베이킹 코치</span>
+      </button>}
+      {boot && ai && <AiPanel onClose={() => setAi(false)} />}
     </>
   );
 }

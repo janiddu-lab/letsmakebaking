@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import dynamic from "next/dynamic";
 import {
   ArrowRight,
@@ -1765,26 +1765,17 @@ export function AdminScreen() {
 }
 
 // API 키는 이 화면에 오지 않습니다. 질문과 동의만 로컬 서버에 전달합니다.
-export function AiPanel({ onClose, inline = false, initialQuestion = "" }: { onClose: () => void; inline?: boolean; initialQuestion?: string }) {
-  const router = useRouter();
+export function AiPanel({ onClose }: { onClose: () => void }) {
   const { boot, profileId, act, notify } = useLab();
   const { language, t } = useLocale();
-  const [text, setText] = useState(initialQuestion);
+  const [text, setText] = useState("");
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [sessionId] = useState(() => crypto.randomUUID());
   const pageSuggestions = siteActions(text, boot!.catalog);
   async function submit() {
-    if (!text.trim() || busy) return;
-    const destination = siteActions(text, boot!.catalog)[0];
-    if (destination) {
-      notify(`${t(destination.title)} →`);
-      onClose();
-      router.push(destination.href);
-      return;
-    }
-    if (!consent || !boot!.health.ai) return;
+    if (!text.trim() || busy || !consent || !boot!.health.ai) return;
     const message = text;
     setText("");
     setMessages((m) => [...m, { role: "user", answer: message }]);
@@ -1802,12 +1793,6 @@ export function AiPanel({ onClose, inline = false, initialQuestion = "" }: { onC
         history: messages.filter(m => m.role === "user" || m.role === "assistant").slice(-6).map(m => ({ role: m.role, content: String(m.answer).slice(0, 5000) })),
       });
       setMessages((m) => [...m, { role: "assistant", ...response }]);
-      // AI가 실제로 참조한 자료도 카탈로그에 존재하는 경우에만 바로 엽니다.
-      const reference = response.refs?.find((ref: any) => boot!.catalog.recipes.some(r => r.id === ref.id) || boot!.catalog.articles.some(a => a.id === ref.id));
-      if (reference && response.responseKind === "GROUNDED_GUIDANCE") {
-        const href = boot!.catalog.recipes.some(r => r.id === reference.id) ? `/recipes/${encodeURIComponent(reference.id)}` : `/learn/${encodeURIComponent(reference.id)}`;
-        onClose(); router.push(href);
-      }
     } catch (error) {
       setText(message);
       setMessages((m) => [
@@ -1835,7 +1820,7 @@ export function AiPanel({ onClose, inline = false, initialQuestion = "" }: { onC
     recognition.start();
   }
   return (
-    <aside className={`ai-panel ${inline ? "ai-inline" : ""}`} aria-label="베이킹 AI 코치">
+    <aside className="ai-panel" aria-label="베이킹 AI 코치">
       <div className="ai-heading">
         <div>
           <Sparkles size={20} />
@@ -1844,13 +1829,13 @@ export function AiPanel({ onClose, inline = false, initialQuestion = "" }: { onC
             {boot!.health.ai ? "외부 API" : "설정 필요"}
           </Tag>
         </div>
-        {!inline && <button
+        <button
           className="icon-button"
           onClick={onClose}
           aria-label="AI 코치 닫기"
         >
           <X size={20} />
-        </button>}
+        </button>
       </div>
       <div className="ai-messages">
         {!boot!.health.ai ? (
@@ -1928,7 +1913,6 @@ export function AiPanel({ onClose, inline = false, initialQuestion = "" }: { onC
         {busy && <p className="muted">자료를 찾아 설명하고 있어요…</p>}
       </div>
       <AiPageLinks actions={pageSuggestions} onNavigate={onClose} />
-      <p className="small notice">사이트에 있는 기능을 질문하면 전송 후 해당 페이지로 자동 이동해요. 페이지 찾기는 외부 AI로 질문을 보내지 않아요.</p>
       <form
         className="ai-composer"
         onSubmit={(e) => {
@@ -1963,7 +1947,7 @@ export function AiPanel({ onClose, inline = false, initialQuestion = "" }: { onC
           <button
             className="send-button"
             aria-label="질문 보내기"
-            disabled={busy || !text.trim() || (!pageSuggestions.length && (!consent || !boot!.health.ai))}
+            disabled={!consent || busy || !text.trim() || !boot!.health.ai}
           >
             <Send size={18} />
           </button>
