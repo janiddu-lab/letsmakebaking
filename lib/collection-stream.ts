@@ -1,4 +1,13 @@
 import type { Page } from "playwright-core";
+import sharp from "sharp";
+
+// 페이지 이동 중 브라우저가 보내는 빈 흰 화면은 마지막 콘텐츠를 덮어쓰지 않습니다.
+export async function hasBrowserContent(frame: Uint8Array) {
+  const { data, info } = await sharp(frame).resize(32, 20, { fit: "fill" }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  let white = 0;
+  for (let i = 0; i < data.length; i += info.channels) if (data[i] > 245 && data[i + 1] > 245 && data[i + 2] > 245) white++;
+  return white / (info.width * info.height) < 0.985;
+}
 
 type Listener = (frame: Uint8Array | null) => void;
 type Channel = { listeners: Set<Listener>; frame?: Uint8Array; updated: number; ended: boolean };
@@ -35,14 +44,16 @@ export function subscribeBrowserStream(id: string, listener: Listener) {
 }
 export async function streamBrowserPage(page: Page, id: string) {
   const session = await page.context().newCDPSession(page);
-  let lastSent = 0;
+  let lastSent = 0, processing = false;
   // screenshot 반복 호출 대신 브라우저의 실시간 screencast 이벤트를 사용합니다.
   session.on("Page.screencastFrame", ({ data, sessionId }) => {
     void session.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
     const url = new URL(page.url());
     if (url.protocol !== "https:" || !["www.instagram.com", "instagram.com"].includes(url.hostname)
-      || /\/accounts\/|\/challenge|\/consent|\/sorry/.test(url.pathname) || Date.now() - lastSent < 120) return;
-    lastSent = Date.now(); publishBrowserFrame(id, Buffer.from(data, "base64"));
+      || /\/accounts\/|\/challenge|\/consent|\/sorry/.test(url.pathname) || processing || Date.now() - lastSent < 150) return;
+    lastSent = Date.now(); processing = true;
+    const frame = Buffer.from(data, "base64");
+    void hasBrowserContent(frame).then(content => { if (content) publishBrowserFrame(id, frame); }).catch(() => {}).finally(() => { processing = false; });
   });
   await session.send("Page.startScreencast", { format: "jpeg", quality: 55, maxWidth: 960, maxHeight: 600, everyNthFrame: 1 });
   return async () => { await session.send("Page.stopScreencast").catch(() => {}); await session.detach().catch(() => {}); };

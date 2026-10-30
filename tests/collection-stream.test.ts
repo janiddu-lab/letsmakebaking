@@ -1,8 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Page } from "playwright-core";
-import { browserStreamResponse, publishBrowserFrame, streamBrowserPage, subscribeBrowserStream, endBrowserStream } from "../lib/collection-stream";
+import sharp from "sharp";
+import { browserStreamResponse, publishBrowserFrame, streamBrowserPage, subscribeBrowserStream, endBrowserStream, hasBrowserContent } from "../lib/collection-stream";
 
 describe("실시간 수집 브라우저 스트림", () => {
+  it("페이지 이동 중 빈 흰 프레임을 제외하고 콘텐츠가 있는 화면만 통과시킨다", async () => {
+    const white = await sharp({ create: { width: 32, height: 20, channels: 3, background: "#ffffff" } }).jpeg().toBuffer();
+    const content = await sharp({ create: { width: 32, height: 20, channels: 3, background: "#444444" } }).jpeg().toBuffer();
+    expect(await hasBrowserContent(white)).toBe(false);
+    expect(await hasBrowserContent(content)).toBe(true);
+  });
   it("HTTP 한 연결에서 서로 다른 새 프레임을 연속 전달하고 접속 종료 시 해제한다", async () => {
     const abort = new AbortController();
     const response = browserStreamResponse("continuous", abort.signal);
@@ -43,7 +50,9 @@ describe("실시간 수집 브라우저 스트림", () => {
     expect(send).toHaveBeenCalledWith("Page.startScreencast", expect.objectContaining({ format: "jpeg" }));
     receive({ data: "AA==", sessionId: 1 }); expect(listener).not.toHaveBeenCalled();
     location = "https://www.instagram.com/p/ABC/";
-    receive({ data: "AA==", sessionId: 2 }); expect(listener).toHaveBeenCalledTimes(1);
+    const content = await sharp({ create: { width: 32, height: 20, channels: 3, background: "#444444" } }).jpeg().toBuffer();
+    receive({ data: content.toString("base64"), sessionId: 2 });
+    await vi.waitFor(() => expect(listener).toHaveBeenCalledTimes(1));
     expect(send).toHaveBeenCalledWith("Page.screencastFrameAck", { sessionId: 1 });
     await stop(); unsubscribe(); expect(send).toHaveBeenCalledWith("Page.stopScreencast"); expect(detach).toHaveBeenCalled();
   });
