@@ -27,6 +27,7 @@ import { Dialog, Empty, PageHeading, SourceList, Tag, useInputDialog } from "./u
 import { PracticalGuide } from "./PracticalGuide";
 import CupWorkshop from "./CupWorkshop";
 import ToolAlternatives from "./ToolAlternatives";
+import { toolAlternatives } from "@/lib/tool-alternatives";
 import AiPageLinks from "./AiPageLinks";
 import { siteActions, replyNavigation } from "@/lib/site-navigation";
 import { useLocale } from "./Locale";
@@ -469,6 +470,13 @@ export function LearnScreen({ id }: { id?: string }) {
     ["troubleshooting", "실패 해결"],
     ["template", "종이 도안"],
   ];
+  // 목록에서도 대체 물건을 바로 보여 주고 상세 화면에서 사용 순서를 안내합니다.
+  const equipmentNotes = c.equipment.map(e => {
+    const alternatives = toolAlternatives(e.id, c);
+    return { id: e.id, title: alternatives.length ? `${e.name} 없을 때` : e.name,
+      summary: alternatives.length ? `${e.name} → ${alternatives.map(a => a.name).join(" · ")}로 대체하기. 사용 순서와 가능한 작업을 확인하세요.` : "확인된 대체 방법이 아직 없어요. 전용 도구가 필요한 작업과 역할을 확인하세요.",
+      type: alternatives.length ? "도구 대체" : "도구 확인" };
+  });
   const items =
     tab === "ingredient"
       ? c.ingredients.map((i) => ({
@@ -478,19 +486,14 @@ export function LearnScreen({ id }: { id?: string }) {
           type: "재료 사전",
         }))
       : tab === "equipment"
-        ? c.equipment.map((e) => ({
-            id: e.id,
-            title: e.name,
-            summary: e.description,
-            type: "도구 안내",
-          }))
+        ? equipmentNotes
         : c.articles
             .filter((a) => tab === "all" || a.type === tab)
             .map((a) => ({
               ...a,
               type: tabs.find((t) => t[0] === a.type)?.[1] ?? a.type,
             }));
-  const searchable = tab === "all" ? [...items, ...c.ingredients.map(i => ({ id: i.id, title: i.name, summary: `${i.description} ${i.aliases.join(" ")}`, type: "재료 사전" })), ...c.equipment.map(e => ({ id: e.id, title: e.name, summary: e.description, type: "도구 안내" }))] : items;
+  const searchable = tab === "all" ? [...items, ...c.ingredients.map(i => ({ id: i.id, title: i.name, summary: `${i.description} ${i.aliases.join(" ")}`, type: "재료 사전" })), ...equipmentNotes] : items;
   const normalized = (s: string) => s.replace(/\s/g, "").toLocaleLowerCase();
   const visible = searchable.filter(i => normalized(i.title + i.summary).includes(normalized(q)));
   return (

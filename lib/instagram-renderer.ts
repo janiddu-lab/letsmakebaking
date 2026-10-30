@@ -24,8 +24,13 @@ export async function renderInstagram(query: string, suppliedUrls: string[] = []
   observer?.({ stage: "browser", message: "독립 Chromium 브라우저를 실행합니다.", query, platform: "instagram" });
   let browser;
   if (process.platform === "linux") {
-    try { browser = await chromium.launch({ headless: true, timeout: 7000, args: ["--disable-dev-shm-usage"] }); }
-    catch { throw new Error("서버용 Chromium을 실행하지 못했어요. 배포 빌드의 브라우저 설치와 서버 자원을 확인하세요."); }
+    // 무료 서버는 첫 실행에 시간이 걸려 페이지 조회와 별도로 시작 여유를 줍니다.
+    try { browser = await chromium.launch({ headless: true, timeout: 20000, args: ["--disable-dev-shm-usage"] }); }
+    catch (error) {
+      console.error("Instagram browser startup failed", error);
+      const timeout = /timeout/i.test(error instanceof Error ? error.message : "");
+      throw new Error(timeout ? "서버 자원이 부족해 Chromium 시작이 20초 안에 완료되지 않았어요. 잠시 후 다시 시도해 주세요." : "서버용 Chromium을 실행하지 못했어요. 배포 빌드의 브라우저 설치와 서버 자원을 확인하세요.");
+    }
   } else try {
     browser = await chromium.launch({ channel: "msedge", headless: true, timeout: 7000 });
   } catch {
