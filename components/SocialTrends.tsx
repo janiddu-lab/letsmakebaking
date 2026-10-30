@@ -180,9 +180,10 @@ export default function SocialTrends() {
             </div>
             <div>
               <strong>{run.platforms.length}</strong>
-              <span>수집 성공 SNS</span>
+              <span>선택 기간에 포함된 SNS</span>
             </div>
           </div>
+          {(baseRun.instagramObserved?.length ?? 0) > 0 && <p className="notice">Instagram 공개 캡션 {baseRun.instagramObserved.length}개를 읽었어요. 이 중 최근 7일 집계에 포함된 게시물은 {baseRun.posts.filter((p: any) => p.platform === "instagram").length}개예요. 수집 여부와 날짜 범위는 다르게 표시합니다.</p>}
           <p className="small muted">
             범위 {new Date(run.since).toLocaleString("ko-KR")} ~{" "}
             {new Date(run.until).toLocaleString("ko-KR")} · 수집{" "}
@@ -280,7 +281,7 @@ export default function SocialTrends() {
             </div>
           {run.filteredOut > 0 && <p className="small muted">저장 자료에서 관련 없는 게시물 {run.filteredOut}개를 제외하고 다시 분석했습니다. 이전 수집 수보다 줄어들 수 있습니다.</p>}
           {(run.instagramObserved?.length ?? 0) > 0 && <details className="space-top">
-            <summary>Instagram에서 자동으로 읽은 공개 게시물 · 날짜 확인</summary>
+            <summary>Instagram에서 읽은 공개 게시물 {run.instagramObserved.length}개 · 날짜 확인</summary>
             <p className="small muted">실제 읽은 자료입니다. 날짜가 선택 기간 밖이거나 날짜 오차 범위가 기간 경계에 걸치는 게시물은 주간 순위·2,000개 목표에서 제외됩니다.</p>
             <div className="social-posts">{run.instagramObserved.map((p: any) => <article key={p.id}>
               <small>{p.timeLabel ?? new Date(p.publishedAt).toLocaleDateString("ko-KR")} · {run.posts.some((item: any) => item.id === p.id) ? "주간 집계 포함" : "기간 밖 또는 날짜 경계로 주간 집계 제외"}</small>
