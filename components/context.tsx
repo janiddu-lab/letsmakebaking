@@ -40,7 +40,7 @@ export async function api(route: string, body?: any, method?: string, extraHeade
     ...(body === undefined
       ? {}
       : { body: body instanceof FormData ? body : JSON.stringify(body) }),
-  });
+  }).catch(() => { throw new Error("서버에 연결하지 못했어요. 인터넷 연결을 확인하고 잠시 후 다시 시도해 주세요."); });
   let json;
   try { json = await res.json(); } catch { throw new Error("서버가 시작 중이거나 연결이 끊겼어요. 잠시 후 다시 시도해 주세요."); }
   // 재배포로 서버 토큰이 바뀐 경우에만 새 토큰으로 한 번 다시 요청합니다.

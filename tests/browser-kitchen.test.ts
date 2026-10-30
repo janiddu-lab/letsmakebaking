@@ -12,6 +12,13 @@ function fixture() {
   return { kitchen, store, boot, call: async (route: string, body?: any, method?: string) => (await kitchen.request(route, body, method ?? (body === undefined ? "GET" : "POST"))).data };
 }
 describe("방문자 브라우저 주방의 실제 사용 흐름", () => {
+  it("공백뿐인 쌍둥이 조건과 같은 조건을 다른 실험으로 저장하지 않는다", async () => {
+    const f = fixture(); await f.kitchen.hydrate(f.boot, "local-default");
+    const input = { recipeId: "shortbread", aValue: " ", bValue: "30분", aDiameter: 60, bDiameter: 55, aThickness: 10, bThickness: 12 };
+    await expect(f.call("features/twins", input)).rejects.toThrow("모두 입력");
+    await expect(f.call("features/twins", { ...input, aValue: " 30분 " })).rejects.toThrow("다르게");
+    expect((await f.call("state/settings"))).toHaveLength(0);
+  });
   it("서버 예시 재고를 개인 주방으로 복사하지 않는다", async () => {
     const f = fixture(); const b = await f.kitchen.hydrate({ ...f.boot, user: { pantry: [{ id: "server" }] } }, "local-default");
     expect(b.user.pantry).toEqual([]); expect(b.profile.nickname).toBe("나의 주방");

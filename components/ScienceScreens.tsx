@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useLab, api, amount, photoUrl } from "./context";
 import { ModelPicker } from "./ConsumerExperience";
 import { Empty, PageHeading, Tag } from "./ui";
@@ -26,6 +27,7 @@ const tabs = [
   ["models", "내 3D 오브제 🪩"],
 ];
 export function ScienceScreen({ initial = "autopsy" }: { initial?: string }) {
+  const router = useRouter();
   const [tab, setTab] = useState(initial);
   return (
     <>
@@ -40,7 +42,7 @@ export function ScienceScreen({ initial = "autopsy" }: { initial?: string }) {
             className={tab === id ? "active" : ""}
             aria-pressed={tab === id}
             key={id}
-            onClick={() => setTab(id)}
+            onClick={() => { setTab(id); router.replace(`/science?tab=${id}`, { scroll: false }); }}
           >
             {label}
           </button>
@@ -524,7 +526,7 @@ function OvenScreen() {
               <button
                 className={`heat-${v}`}
                 key={i}
-                aria-label={`${Math.floor(i / 3) + 1}행 ${(i % 3) + 1}열 색 상태`}
+                aria-label={`${Math.floor(i / 3) + 1}행 ${(i % 3) + 1}열 색 상태: ${["미확인", "연함", "황금", "진함"][v]}`}
                 onClick={() =>
                   setHeatmap(heatmap.map((x, j) => (j === i ? (x + 1) % 4 : x)))
                 }

@@ -107,6 +107,10 @@ describe("엄격 검색과 보유량 판정", () => {
   });
 });
 describe("단위·팬·원가의 정확한 계산", () => {
+  it("무한대 부대비용이나 0개 생산량으로 개당 원가를 만들지 않는다", () => {
+    expect(() => calculateCost(base, 1, [], [], c, Infinity)).toThrow();
+    expect(() => calculateCost({ ...base, yieldCount: 0 }, 1, [], [], c)).toThrow();
+  });
   it("같은 높이의 원형 팬 지름을 절반으로 바꾸면 배합은 1/4이다", () => {
     expect(
       panFactor({ shape: "round", width: 20 }, { shape: "round", width: 10 }),

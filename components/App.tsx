@@ -1017,6 +1017,7 @@ function Kitchen() {
             <label className="field">
               재료
               <select
+                aria-label="보유 재료 선택"
                 value={ingredient}
                 onChange={(e) => {
                   setIngredient(e.target.value);
@@ -1199,6 +1200,7 @@ function Kitchen() {
           <label className="field">
             재료
             <select
+              aria-label="가격 등록 재료 선택"
               value={priceIngredient}
               onChange={(e) => {
                 setPriceIngredient(e.target.value);

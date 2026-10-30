@@ -148,7 +148,8 @@ export class BrowserKitchen {
       if (key === "features/twins") {
         if (verb === "GET") return summarizeTwins(user.settings, url.searchParams.get("protocol") ?? "");
         for (const field of ["aDiameter", "bDiameter", "aThickness", "bThickness"]) if (!(Number(body[field]) > 0) || Number(body[field]) > 1000) throw new Error("지름과 두께를 0보다 큰 실제 측정값으로 입력하세요.");
-        if (body.aValue === body.bValue) throw new Error("A와 B의 조건을 다르게 입력하세요.");
+        if (!String(body.aValue ?? "").trim() || !String(body.bValue ?? "").trim()) throw new Error("A와 B의 실험 조건을 모두 입력하세요.");
+        if (String(body.aValue).trim() === String(body.bValue).trim()) throw new Error("A와 B의 조건을 다르게 입력하세요.");
         const recipe = c.recipes.find(r => r.id === body.recipeId);
         if (!recipe) throw new Error("레시피를 선택하세요.");
         const protocolKey = JSON.stringify([recipe.id, recipe.ingredients, body.variable, body.aValue.trim(), body.bValue.trim()]);
