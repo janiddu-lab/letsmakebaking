@@ -13,10 +13,16 @@ export async function openInstagramPage(page: Page, url: string, timeout = 12000
   catch { throw new Error("Instagram 연결이 지연되어 페이지를 열지 못했어요. 잠시 후 해당 검색어를 다시 시도해 주세요."); }
   checkInstagramLocation(page.url());
 }
-export async function renderedInstagramPost(page: Page, url: string, timeout = 7000) {
+export async function renderedInstagramPost(page: Page, url: string, timeout = 7000, showPage = false) {
   await openInstagramPage(page, url, timeout);
   await page.locator('meta[property="og:description"]').waitFor({ state: "attached", timeout: Math.min(timeout, 5000) }).catch(() => {});
   checkInstagramLocation(page.url());
+  if (showPage) {
+    await page.locator("main,article").first().waitFor({ state: "visible", timeout: 1500 }).catch(() => {});
+    // 공개 페이지에서 닫을 수 있는 안내만 닫고 실제 내용을 읽으며 스크롤합니다.
+    await page.getByRole("button", { name: /^(닫기|close)$/i }).first().click({ timeout: 300 }).catch(() => {});
+    await page.mouse.wheel(0, 420);
+  }
   return parseInstagram(await page.content(), url);
 }
 
@@ -59,16 +65,16 @@ export async function renderInstagram(query: string, suppliedUrls: string[] = []
     }
     const canonical = [...new Set(links.flatMap((url) => { try { return [instagramUrl(url)]; } catch { return []; } }))].slice(0, 6);
     observer?.({ stage: "links", message: `공개 링크 ${canonical.length}개를 확인했습니다.`, platform: "instagram", query });
-    const visual = demo ? canonical.slice(0, 2) : [];
+    const visual = demo ? canonical : [];
     const results = await Promise.allSettled(canonical.filter(url => !visual.includes(url)).map(async (url) => {
       const html = await publicHtml(url);
       return parseInstagram(html, url);
     }));
     const posts: SocialPost[] = results.flatMap((r) => r.status === "fulfilled" ? r.value : []);
     for (const url of visual) {
-      if (deadline - Date.now() < 6000) break;
+      if (deadline - Date.now() < 4000) break;
       observer?.({ stage: "post", message: "시연 모드: 실제 게시물을 브라우저로 열어 캡션과 날짜를 읽습니다.", platform: "instagram", query, url });
-      try { posts.push(...await renderedInstagramPost(page, url, 7000)); }
+      try { posts.push(...await renderedInstagramPost(page, url, 4500, true)); }
       catch (e) { observer?.({ stage: "error", message: e instanceof Error ? e.message : "게시물 화면을 읽지 못했습니다.", platform: "instagram", query, url }); if (/로그인.*요구|접근 확인.*요구/.test(e instanceof Error ? e.message : "")) throw e; }
     }
     // 상세 HTML이 비어 있으면 같은 독립 브라우저에서도 읽습니다. 재시도는 두 건까지만 합니다.

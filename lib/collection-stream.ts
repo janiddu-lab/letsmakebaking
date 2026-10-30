@@ -21,7 +21,8 @@ export function publishBrowserFrame(id: string, frame: Uint8Array) {
 }
 export function endBrowserStream(id: string) {
   const entry = channel(id);
-  entry.ended = true; entry.frame = undefined; entry.updated = Date.now();
+  // 연결이 끝나도 마지막 정상 화면은 유지합니다. 종료 시 백지로 덮어쓰지 않습니다.
+  entry.ended = true; entry.updated = Date.now();
   for (const listener of entry.listeners) listener(null);
 }
 export function subscribeBrowserStream(id: string, listener: Listener) {
@@ -61,16 +62,13 @@ export function browserStreamResponse(id: string, signal: AbortSignal) {
         unsubscribe = subscribeBrowserStream(id, frame => {
           if (!frame) { close(); return; }
           if (closed || (controller.desiredSize ?? 0) <= 0) return;
-          const header = encoder.encode(`--baking-stream\r\nContent-Type: image/jpeg\r\nContent-Length: ${frame.length}\r\n\r\n`);
-          const chunk = new Uint8Array(header.length + frame.length + 2);
-          chunk.set(header); chunk.set(frame, header.length); chunk.set([13, 10], header.length + frame.length);
-          controller.enqueue(chunk);
+          controller.enqueue(encoder.encode(`event: frame\ndata: ${Buffer.from(frame).toString("base64")}\n\n`));
         });
         if (closed) { cleanup(); return; }
-        heartbeat = setInterval(() => { if (!closed && (controller.desiredSize ?? 0) > 0) controller.enqueue(encoder.encode("\r\n")); }, 10000);
+        heartbeat = setInterval(() => { if (!closed && (controller.desiredSize ?? 0) > 0) controller.enqueue(encoder.encode(": keep-alive\n\n")); }, 10000);
       } catch { close(); }
     },
     cancel() { closed = true; cleanup(); },
   });
-  return new Response(stream, { headers: { "Content-Type": "multipart/x-mixed-replace; boundary=baking-stream", "Cache-Control": "no-store, no-transform", "X-Accel-Buffering": "no", "X-Content-Type-Options": "nosniff" } });
+  return new Response(stream, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-store, no-transform", "X-Accel-Buffering": "no", "X-Content-Type-Options": "nosniff" } });
 }

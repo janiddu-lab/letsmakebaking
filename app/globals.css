@@ -3063,7 +3063,7 @@ dialog { max-width: min(600px, calc(100vw - 32px)); max-height: 85dvh; overflow:
 }
 /* 수집 중인 브라우저의 연속 화면만 표시합니다. */
 .crawl-screen { margin: 26px 0; overflow: hidden; border-radius: 14px; background: #fff; aspect-ratio: 8/5; }
-.crawl-screen img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.crawl-screen canvas { display: block; width: 100%; height: 100%; object-fit: contain; }
 .tool-alternatives { margin: 24px 0; }
 .tool-swap-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,280px),1fr)); gap: 20px; }
 .tool-swap-card { border: 2px solid #40374d; border-radius: 18px; padding: 24px; background: #fffdf2; box-shadow: 4px 4px 0 #dfd4e9; min-width: 0; }

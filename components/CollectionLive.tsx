@@ -1,17 +1,34 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-// 수집 브라우저의 연속 화면만 표시합니다. 설명·로그·저장 장면·재생 버튼은 두지 않습니다.
+// 브라우저의 새 화면을 즉시 그립니다. 연결 종료·재연결 때 이미 표시한 화면을 지우지 않습니다.
 export default function CollectionLive({ jobId, active }: { jobId?: string; active: boolean }) {
-  const [ready, setReady] = useState(false), [retry, setRetry] = useState(0);
-  useEffect(() => { setReady(false); setRetry(0); }, [jobId]);
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const [visible, setVisible] = useState(false);
   useEffect(() => {
-    if (!active || ready) return;
-    const timer = setTimeout(() => setRetry(value => value + 1), 15000);
-    return () => clearTimeout(timer);
-  }, [active, ready, retry]);
-  if (!jobId || (!active && !ready)) return null;
-  return <section className="crawl-screen" aria-label="실시간 크롤링 화면">
-    <img key={`${jobId}-${retry}`} src={`/api/features/social/stream?jobId=${encodeURIComponent(jobId)}&connection=${retry}`} alt="실시간 수집 브라우저" onLoad={() => setReady(true)} onError={() => setReady(false)} />
+    if (!jobId || !active) return;
+    let disposed = false, painting = false, pending: string | undefined;
+    const source = new EventSource(`/api/features/social/stream?jobId=${encodeURIComponent(jobId)}`);
+    const paint = async () => {
+      if (painting || !pending) return;
+      painting = true;
+      const data = pending; pending = undefined;
+      try {
+        const bytes = Uint8Array.from(atob(data), letter => letter.charCodeAt(0));
+        const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/jpeg" }));
+        if (!disposed && canvas.current) {
+          canvas.current.getContext("2d")?.drawImage(bitmap, 0, 0, 960, 600);
+          setVisible(true);
+        }
+        bitmap.close();
+      } catch { /* 손상된 프레임은 건너뛰고 마지막 정상 화면을 유지합니다. */ }
+      finally { painting = false; if (!disposed && pending) void paint(); }
+    };
+    source.addEventListener("frame", event => { pending = (event as MessageEvent).data; void paint(); });
+    return () => { disposed = true; source.close(); };
+  }, [jobId, active]);
+  return <section className="crawl-screen" aria-label="실시간 크롤링 화면" hidden={!visible}>
+    <canvas ref={canvas} width={960} height={600} role="img" aria-label="실시간 수집 브라우저" />
   </section>;
 }
+
