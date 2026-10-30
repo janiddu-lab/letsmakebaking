@@ -30,6 +30,10 @@ describe("AI 질문에서 실제 내부 페이지로 연결", () => {
   });
 });
 describe("언어 선택과 공개 콘텐츠 번역", () => {
+  it.each(["쿠키커터가 없으면 어떡해", "쿠키 커터가 없어요", "쿠키틀 대신 뭘 쓸까"])('%s 질문은 실제 도구 대체 안내를 찾는다', question => {
+    const actions = siteActions(question, catalog);
+    expect(actions.some(a => a.href === "/learn/equipment-cookie-cutter")).toBe(true);
+  });
   it("지원 언어만 허용하고 한국어는 원문을 유지한다", () => {
     expect(asLanguage("en")).toBe("en"); expect(asLanguage("ja")).toBe("ja"); expect(asLanguage("unknown")).toBe("ko");
     expect(translateCore("베이킹 계산기", "en")).toBe("Baking calculators");

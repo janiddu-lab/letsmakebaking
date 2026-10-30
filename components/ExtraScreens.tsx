@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import dynamic from "next/dynamic";
 import {
@@ -1766,6 +1767,7 @@ export function AdminScreen() {
 
 // API 키는 이 화면에 오지 않습니다. 질문과 동의만 로컬 서버에 전달합니다.
 export function AiPanel({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   const { boot, profileId, act, notify } = useLab();
   const { language, t } = useLocale();
   const [text, setText] = useState("");
@@ -1773,10 +1775,15 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const [sessionId] = useState(() => crypto.randomUUID());
+  const [navigation, setNavigation] = useState<ReturnType<typeof siteActions>[number] | null>(null);
   const pageSuggestions = siteActions(text, boot!.catalog);
   async function submit() {
     if (!text.trim() || busy || !consent || !boot!.health.ai) return;
-    const message = text;
+    const destination = siteActions(text, boot!.catalog)[0];
+    if (destination) { setNavigation(destination); return; }
+    await answerQuestion(text);
+  }
+  async function answerQuestion(message: string) {
     setText("");
     setMessages((m) => [...m, { role: "user", answer: message }]);
     setBusy(true);
@@ -1821,6 +1828,10 @@ export function AiPanel({ onClose }: { onClose: () => void }) {
   }
   return (
     <aside className="ai-panel" aria-label="베이킹 AI 코치">
+      <Dialog open={!!navigation} title={navigation?.id.startsWith("equipment:") ? "도구 페이지로 이동할까요?" : "관련 페이지로 이동할까요?"} onClose={() => setNavigation(null)}>
+        <p>질문과 관련된 사이트 안내가 있어요.</p><strong>{navigation && t(navigation.title)}</strong><p>{navigation?.description}</p>
+        <div className="row-actions"><button className="button outline" onClick={async () => { setNavigation(null); await answerQuestion(text); }}>이동하지 않고 답변받기</button><button className="button primary" onClick={() => { if (!navigation) return; const href = navigation.href; setNavigation(null); onClose(); router.push(href); }}>이동하기</button><button className="text-button" onClick={() => setNavigation(null)}>취소</button></div>
+      </Dialog>
       <div className="ai-heading">
         <div>
           <Sparkles size={20} />

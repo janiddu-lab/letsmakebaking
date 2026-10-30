@@ -41,10 +41,15 @@ const translatedKeywords: Record<string, RegExp> = {
 export function siteActions(question: string, catalog: Catalog): SiteAction[] {
   const q = normalize(question);
   if (q.length < 2) return [];
+  // '쿠키커터가 없으면?'처럼 도구 이름으로 묻는 질문도 실제 대체 안내와 연결합니다.
+  const equipment = /없|대체|대신|without|donothave|donthave|haveno|^no|持っていない|ない|代用/.test(q) ? catalog.equipment.filter(e => [e.name, translateCore(e.name, "en"), translateCore(e.name, "ja"), ...(e.id === "cookie-cutter" ? ["쿠키틀", "쿠키모양틀", "cookiecutter", "クッキー型"] : [])].some(name => normalize(name).length >= 2 && q.includes(normalize(name)))).map(e => {
+    const article = catalog.articles.find(a => a.id === `equipment-${e.id}`);
+    return { id: `equipment:${e.id}`, title: article?.title ?? `${e.name} 대체 안내`, description: article?.summary ?? "집에 있는 도구로 대체할 수 있는 조건을 확인해요.", href: article ? `/learn/${encodeURIComponent(article.id)}` : "/learn?type=equipment" };
+  }) : [];
   const matches = tools.filter(t => t.pattern.test(q) || translatedKeywords[t.id]?.test(q)).map(({ pattern, ...action }) => action);
   const recipes = catalog.recipes.filter(r => [r.title, translateCore(r.title, "en"), translateCore(r.title, "ja")].some(title => normalize(title).length > 2 && q.includes(normalize(title)))).map(r => ({ id: `recipe:${r.id}`, title: r.title, description: "재료·준비·만들기 순서를 확인해요.", href: `/recipes/${encodeURIComponent(r.id)}` }));
   const articles = catalog.articles.filter(a => normalize(a.title).length > 3 && q.includes(normalize(a.title))).map(a => ({ id: `article:${a.id}`, title: a.title, description: a.summary, href: `/learn/${encodeURIComponent(a.id)}` }));
-  return [...recipes, ...matches, ...articles].filter((a, i, all) => all.findIndex(b => b.href === a.href) === i).slice(0, 4);
+  return [...equipment, ...recipes, ...matches, ...articles].filter((a, i, all) => all.findIndex(b => b.href === a.href) === i).slice(0, 4);
 }
 export function resolveSiteActions(ids: string[], candidates: SiteAction[]) {
   const selected = ids.map(id => candidates.find(a => a.id === id)).filter((a): a is SiteAction => !!a);
