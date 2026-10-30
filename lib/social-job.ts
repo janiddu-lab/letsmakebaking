@@ -79,7 +79,8 @@ export async function stepSocialJob(id: string, stop = false) {
   locks.bakingSocialJobs!.add(id);
   try {
     // 매 요청에서 작은 묶음만 읽고 저장하여 페이지 새로고침·서버 재시작 뒤에도 이어갈 수 있게 합니다.
-    const tasks = stop || job.posts.length >= job.target ? [] : job.tasks.splice(0, 2) as Task[];
+    // 무료 서버에서 Chromium 두 개가 동시에 실행되지 않게 Instagram은 한 검색어씩 처리합니다.
+    const tasks = stop || job.posts.length >= job.target ? [] : job.tasks.splice(0, job.tasks[0]?.platform === "instagram" ? 1 : 2) as Task[];
     const results = await Promise.allSettled(tasks.map(async (task) => {
       if (task.platform === "bluesky") return { task, ...(await blueskyPage(task.query, task.since ?? job.since, task.until ?? job.until)) };
       if (task.platform === "youtube") return { task, posts: await crawlYoutubeQuery(task.query, job.since, job.until), cursor: undefined };
@@ -119,7 +120,7 @@ export async function stepSocialJob(id: string, stop = false) {
         platforms: [...new Set(job.posts.map((p: SocialPost) => p.platform))], errors: job.errors,
         notes: job.notes ?? [],
         instagramObserved: job.instagramObserved ?? [],
-        status: job.posts.length ? job.errors.length ? "partial" : "completed" : "failed",
+        status: job.posts.length ? job.errors.length ? "partial" : "completed" : job.instagramObserved?.length ? "no_recent_posts" : "failed",
         today: summarizeSocial(todayPosts(job.posts, job.todaySince), job.todaySince, job.until),
         notice: "최근 7일(KST 오늘 포함 7개 날짜)의 공개 검색 표본입니다. 오늘 자료는 별도 집계하며 목표 미달은 그대로 표시합니다. SNS 전체의 인기 순위·상승률이 아닙니다." });
     }

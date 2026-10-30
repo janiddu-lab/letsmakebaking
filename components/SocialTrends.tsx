@@ -193,11 +193,12 @@ export default function SocialTrends() {
               {run.errors.map((e: string) => (
                 <p key={e}>{e}</p>
               ))}
-              {run.status === "failed" && (
+              {run.status === "failed" && !run.instagramObserved?.length && (
                 <p>이번 수집은 실패했어요. 예시 게시물로 채우지 않았습니다.</p>
               )}
             </div>
           )}
+          {(run.status === "no_recent_posts" || (!run.posts.length && run.instagramObserved?.length > 0)) && <p className="notice">공개 게시물은 읽었지만 최근 7일에 포함되는 자료가 없어요. 아래 Instagram 관찰 목록에서 게시 날짜를 확인할 수 있어요.</p>}
           {(run.notes?.length ?? 0) > 0 && <div className="notice">{run.notes.map((note: string) => <p key={note}>{note}</p>)}</div>}
           <h2 className="space-top">{periodView === "today" ? baseRun.isStale ? baseRun.day : "오늘" : "수집 기간"} 자료에 등장한 디저트</h2>
           <p className="small muted">본문과 제목의 제품명을 집계해요. 별칭은 하나로 묶으며, 이름 사전에 있다는 이유만으로 순위에 넣지 않습니다. 현재 표본의 언급순이며 상승세나 전국 유행을 뜻하지 않아요.</p>
@@ -303,8 +304,8 @@ export default function SocialTrends() {
         <p className="small">
           Bluesky 공개 검색 API, YouTube 공개 검색 HTML, Instagram 공개 해시태그·게시물
           HTML을 사용합니다. 세 서비스 모두 키 입력 없이 시도할 수 있어요. HTML 안의
-          JSON만 해석하고 페이지 스크립트를 실행하지 않습니다. 게시 시각이 없거나 오늘인지
-          불확실한 자료는 제외합니다. 페이지 형식이나 서비스 제한에 따라 수집에 실패할 수 있어요.
+          JSON을 해석하며 Instagram 브라우저 조회에서는 페이지를 렌더링합니다. 게시 시각이 없거나 기간이
+          불확실한 자료는 제외합니다. Instagram은 필요한 경우 Playwright 브라우저로 공개 링크와 상세 캡션을 읽습니다. 로그인·접근 확인이 요구되면 중단합니다.
         </p>
         <p className="small">
           <a href="https://docs.bsky.app/" target="_blank" rel="noreferrer">

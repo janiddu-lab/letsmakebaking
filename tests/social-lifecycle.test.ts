@@ -14,6 +14,7 @@ vi.mock("../lib/social-trends", async (original) => ({ ...await original<any>(),
 vi.mock("../lib/public-social", async (original) => ({ ...await original<any>(), crawlYoutubeQuery: vi.fn(), crawlInstagram: vi.fn() }));
 import { blueskyPage, latestSocial } from "../lib/social-trends";
 import { startSocialJob, stepSocialJob } from "../lib/social-job";
+import { crawlInstagram } from "../lib/public-social";
 const sample = (n: number) => ({ id: `post-${n}`, platform: "bluesky", author: `baker-${n}`, text: `쿠키 실험 ${n}`, url: "https://bsky.app/", publishedAt: "2026-10-29T01:00:00Z" });
 
 beforeEach(() => {
@@ -23,6 +24,16 @@ beforeEach(() => {
 });
 afterEach(() => vi.useRealTimers());
 describe("저장되는 수집 작업", () => {
+  it("Instagram은 한 번에 한 검색어만 실행하고 기간 밖 읽기를 조회 실패와 구분한다", async () => {
+    vi.mocked(crawlInstagram).mockResolvedValue({ posts: [{ ...sample(99), platform: "instagram", publishedAt: "2026-09-01T01:00:00Z" }], warnings: [] });
+    const job = startSocialJob(["instagram"]);
+    await stepSocialJob(job.id);
+    expect(crawlInstagram).toHaveBeenCalledTimes(1);
+    await stepSocialJob(job.id, true);
+    expect(latestSocial().run?.posts).toHaveLength(0);
+    expect(latestSocial().run?.status).toBe("no_recent_posts");
+    expect(latestSocial().run?.instagramObserved).toHaveLength(1);
+  });
   it("진행량을 저장하고 다음 날 이어가도 ID와 기간을 유지한다", async () => {
     const job = startSocialJob(["bluesky"]);
     const first = await stepSocialJob(job.id);
