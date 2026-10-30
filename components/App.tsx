@@ -38,7 +38,9 @@ import {
   amount,
   statusLabel,
   photoUrl,
+  allergenName,
 } from "./context";
+import { recommendationPantry, exclusionIds, bakeLink, savedCup, preparationChecks } from "@/lib/consumer-flow";
 import { KitchenJourney, RecipePreparation, PersonalSettings } from "./ConsumerExperience";
 import { Tag, PageHeading, Empty, RecipeCard, SourceList } from "./ui";
 import {
@@ -478,6 +480,8 @@ function Discover({ listOnly = false }: { listOnly?: boolean }) {
   const [owned, setOwned] = useState<string[]>([]);
   const [must, setMust] = useState<string[]>([]);
   const [exclude, setExclude] = useState<string[]>([]);
+  const [excludedAllergens, setExcludedAllergens] = useState<string[]>([]);
+  const [excludeQuery, setExcludeQuery] = useState("");
   const [target, setTarget] = useState(c.recipes[0]?.id ?? "");
   const [query, setQuery] = useState("");
   const [ingredientQuery, setIngredientQuery] = useState("");
@@ -502,6 +506,7 @@ function Discover({ listOnly = false }: { listOnly?: boolean }) {
         setTarget(s.target);
         setMust(s.must ?? []);
         setExclude(s.exclude ?? []);
+        setExcludedAllergens(s.excludedAllergens ?? []);
       } catch {}
     } else setSelected(boot!.user.pantry.map((p) => p.ingredientId));
     const params = new URLSearchParams(window.location.search);
@@ -518,9 +523,10 @@ function Discover({ listOnly = false }: { listOnly?: boolean }) {
     if (!initialized || listOnly) return;
     localStorage.setItem(
       `baking-search-${profileId}`,
-      JSON.stringify({ entry, mode, selected, owned, target, must, exclude }),
+      JSON.stringify({ entry, mode, selected, owned, target, must, exclude, excludedAllergens }),
     );
     setMatching(true);
+    let cancelled = false;
     const timer = setTimeout(async () => {
       try {
         const ids =
@@ -529,22 +535,13 @@ function Discover({ listOnly = false }: { listOnly?: boolean }) {
             : mode === "PANTRY"
               ? boot!.user.pantry.map((p) => p.ingredientId)
               : selected;
-        const pantry = ids.map((id) => {
-          const p = boot!.user.pantry.find((p) => p.ingredientId === id);
-          return {
-            ingredientId: id,
-            quantity: p?.quantity ?? null,
-            unit:
-              p?.unit ?? c.ingredients.find((i) => i.id === id)?.unit ?? "g",
-            cupMl: p?.cupMl,
-          };
-        });
+        const pantry = recommendationPantry(ids, boot!.user.pantry as unknown as Pantry[], c);
         const result = await api(`matches?profileId=${profileId}`, {
           entryMode: entry,
           ingredientMode: entry === "RECIPE_FIRST" ? "PANTRY" : mode,
-          allowedIds: ids,
+          allowedIds: [...new Set(ids)],
           mustUseIds: entry === "RECIPE_FIRST" ? [] : must,
-          excludedIds: exclude,
+          excludedIds: exclusionIds(exclude, excludedAllergens, c),
           pantry,
           equipment: boot!.user.equipment.map((e) => e.equipmentId),
           targetRecipeId: entry === "RECIPE_FIRST" ? target : undefined,
@@ -556,16 +553,18 @@ function Discover({ listOnly = false }: { listOnly?: boolean }) {
             ...(appliance ? { appliance } : {}),
           },
         });
+        if (cancelled) return;
         setResults(result.results);
         setError("");
       } catch (e) {
+        if (cancelled) return;
         setError(e instanceof Error ? e.message : "조건을 확인해 주세요.");
         setResults([]);
       } finally {
-        setMatching(false);
+        if (!cancelled) setMatching(false);
       }
     }, 250);
-    return () => clearTimeout(timer);
+    return () => { cancelled = true; clearTimeout(timer); };
   }, [
     entry,
     mode,
@@ -573,6 +572,7 @@ function Discover({ listOnly = false }: { listOnly?: boolean }) {
     owned,
     must,
     exclude,
+    excludedAllergens,
     target,
     maxTime,
     difficulty,
@@ -773,8 +773,11 @@ function Discover({ listOnly = false }: { listOnly?: boolean }) {
                   </select>
                 </label>
               </div>
+              <h3>알레르기 관련 성분으로 제외하기</h3>
+              <div className="ingredient-picker">{[...new Set(c.ingredients.flatMap(i => i.allergens))].map(id => <button key={id} className={`chip ${excludedAllergens.includes(id) ? "excluded" : ""}`} aria-pressed={excludedAllergens.includes(id)} onClick={() => toggle(id, excludedAllergens, setExcludedAllergens)}>{allergenName(id)} 제외</button>)}</div>
+              <label className="field">제외할 재료 검색<input value={excludeQuery} onChange={e => setExcludeQuery(e.target.value)} placeholder="호두, 참깨, 초콜릿…" /></label>
               <div className="ingredient-picker">
-                {c.ingredients.slice(0, 35).map((i) => (
+                {c.ingredients.filter(i => (i.name + i.aliases.join(" ")).replace(/\s/g, "").includes(excludeQuery.replace(/\s/g, ""))).map((i) => (
                   <button
                     key={i.id}
                     className={`chip ${exclude.includes(i.id) ? "excluded" : ""}`}
@@ -809,6 +812,7 @@ function Discover({ listOnly = false }: { listOnly?: boolean }) {
                   target,
                   must,
                   exclude,
+                  excludedAllergens,
                 })
               }
             >
@@ -907,7 +911,7 @@ function Kitchen() {
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("g");
   const [expiry, setExpiry] = useState("");
-  const [cupMl, setCupMl] = useState("");
+  const [cupMl, setCupMl] = useState(() => String(savedCup(boot!.user.settings)?.ml ?? ""));
   const [q, setQ] = useState("");
   const [priceIngredient, setPriceIngredient] = useState(
     c.ingredients[0]?.id ?? "",
@@ -1373,7 +1377,7 @@ function RecipeDetail({ id }: { id: string }) {
         </div>
       </div>
       <OvenSuggestion recipe={base} />
-      <RecipePreparation recipe={recipe} />
+      <RecipePreparation key={`${id}-${scale}`} recipe={recipe} />
       <div className="recipe-layout">
         <div>
           <section className="panel">
@@ -1415,7 +1419,7 @@ function RecipeDetail({ id }: { id: string }) {
               시간을 같은 비율로 바꾸지 않아요.
             </p>
             {base.unitConvention && <p className="notice small">계량 기준: {base.unitConvention}</p>}
-            <Link href="/calculator" className="inline-link">
+            <Link href={`/calculator?tab=unit&recipe=${base.id}`} className="inline-link">
               컵·숟가락·팬 크기 계산하기 ↗
             </Link>
           </section>
@@ -1584,10 +1588,11 @@ function ClockIcon() {
 // 화면용 계산도 서버와 동일한 함수를 사용하므로 양쪽 계산식이 어긋나지 않습니다.
 function Calculator() {
   const { boot, act } = useLab();
+  const params = useSearchParams();
   const c = boot!.catalog;
-  const [tab, setTab] = useState("cost");
+  const [tab, setTab] = useState(["cost", "shopping", "scale", "pan", "unit"].includes(params.get("tab") ?? "") ? params.get("tab")! : "cost");
   const [basket, setBasket] = useState<string[]>([]);
-  const [recipeId, setRecipeId] = useState(c.recipes[0].id);
+  const [recipeId, setRecipeId] = useState(c.recipes.find(r => r.id === params.get("recipe"))?.id ?? c.recipes[0].id);
   const [scale, setScale] = useState(1);
   const [extras, setExtras] = useState(0);
   const [shape, setShape] = useState("round");
@@ -1595,13 +1600,14 @@ function Calculator() {
   const [newWidth, setNewWidth] = useState(10);
   const [oldHeight, setOldHeight] = useState(20);
   const [newHeight, setNewHeight] = useState(20);
-  const [ingredient, setIngredient] = useState(c.ingredients[0].id);
-  const [value, setValue] = useState("100");
-  const [from, setFrom] = useState("g");
-  const [to, setTo] = useState("cup");
-  const [cup, setCup] = useState(240);
+  const [ingredient, setIngredient] = useState(c.ingredients.find(i => i.id === params.get("ingredient"))?.id ?? c.ingredients[0].id);
+  const [value, setValue] = useState(params.get("amount") ?? "100");
+  const [from, setFrom] = useState(params.get("from") ?? "g");
+  const [to, setTo] = useState(params.get("to") ?? "cup");
+  const [cup, setCup] = useState(() => String(savedCup(boot!.user.settings)?.ml ?? ""));
   const [result, setResult] = useState<any>(null);
   const [err, setErr] = useState("");
+  useEffect(() => { setResult(null); setErr(""); }, [tab, recipeId, scale, shape, oldWidth, newWidth, oldHeight, newHeight, ingredient, value, from, to, cup]);
   const recipe =
     tab === "shopping" && basket.length
       ? combineForShopping(
@@ -1610,6 +1616,7 @@ function Calculator() {
         )
       : c.recipes.find((r) => r.id === recipeId)!;
   let cost: any;
+  let costError = "";
   try {
     cost = calculateCost(
       recipe,
@@ -1619,7 +1626,7 @@ function Calculator() {
       c,
       extras,
     );
-  } catch {}
+  } catch (e) { costError = e instanceof Error ? e.message : "계산 입력을 확인하세요."; }
   function doCalc() {
     try {
       setErr("");
@@ -1638,18 +1645,20 @@ function Calculator() {
           unit: "개 (계획)",
           items: adapt(recipe, [], c, scale).recipe.ingredients,
         });
-      else
+      else {
+        if ((from === "cup" || to === "cup") && (!cup || !Number.isFinite(Number(cup)) || Number(cup) < 10 || Number(cup) > 2000)) throw new Error("내 컵의 확인한 용량을 10~2,000ml로 입력하세요.");
         setResult({
-          value: convert(
+          value: amount(convert(
             value,
             from,
             to,
             c.ingredients.find((i) => i.id === ingredient),
-            cup,
-          ),
+            Number(cup) || 240,
+          )),
           unit: to,
           note: "해당 재료의 환산 근거가 있는 경우만 계산해요. 실제 담는 방식에 따라 차이가 있을 수 있어요.",
         });
+      }
     } catch (e) {
       setErr(e instanceof Error ? e.message : "입력을 확인해 주세요.");
       setResult(null);
@@ -1706,8 +1715,7 @@ function Calculator() {
             </div>
             {!basket.length && (
               <p className="notice">
-                레시피를 선택하면 공통 재료를 먼저 합산해요. 아래에는 현재 선택
-                레시피의 계산이 표시됩니다.
+                합산할 메뉴를 한 개 이상 선택하세요. 선택 전에는 장보기 금액을 계산하지 않습니다.
               </p>
             )}
           </>
@@ -1732,8 +1740,8 @@ function Calculator() {
                 배합 배수
                 <input
                   type="number"
-                  min="0.25"
-                  max="4"
+                  min={recipe.minScale ?? .25}
+                  max={recipe.maxScale ?? 4}
                   step="0.25"
                   value={scale}
                   onChange={(e) => setScale(Number(e.target.value))}
@@ -1857,9 +1865,10 @@ function Calculator() {
                   type="number"
                   min="1"
                   value={cup}
-                  onChange={(e) => setCup(Number(e.target.value))}
+                  onChange={(e) => setCup(e.target.value)}
                 />
               </label>
+              <p className="small muted">{savedCup(boot!.user.settings) ? `저장한 컵: ${savedCup(boot!.user.settings)!.name}` : "내 컵 용량은 임의의 기본값으로 채우지 않아요."} <Link href="/learn/basic-volume">컵 용량 확인·등록하기 →</Link></p>
             </>
           )}
         </div>
@@ -1883,7 +1892,8 @@ function Calculator() {
             ))}
           </div>
         )}
-        {(tab === "cost" || tab === "shopping") && cost && (
+        {(tab === "cost" || tab === "shopping") && costError && <p className="notice error">{costError}</p>}
+        {(tab === "cost" || (tab === "shopping" && basket.length > 0)) && cost && (
           <>
             <div className="cost-summary-grid">
               <div>
@@ -1900,7 +1910,7 @@ function Calculator() {
                   {tab === "shopping" ? "합산 원가" : "개당 원가"}
                   {cost.incomplete ? " (부분합)" : ""}
                 </span>
-                <strong>{money(cost.lines.some((l: any) => l.cost !== null) || extras > 0 ? cost.perItem : null)}</strong>
+                <strong>{tab === "shopping" ? `${basket.length}개 메뉴` : money(cost.lines.some((l: any) => l.cost !== null) || extras > 0 ? cost.perItem : null)}</strong>
                 <small>
                   {tab === "shopping"
                     ? "서로 다른 메뉴의 개당 평균은 계산하지 않아요."
@@ -1912,7 +1922,7 @@ function Calculator() {
                   추가 구매 지출
                   {cost.additionalIncomplete ? " (확인된 항목)" : ""}
                 </span>
-                <strong>{money(cost.additional)}</strong>
+                <strong>{money(cost.lines.some((l: any) => l.purchase !== null) ? cost.additional : null)}</strong>
                 <small>판매 포장 단위로 계산</small>
               </div>
             </div>
@@ -1993,7 +2003,7 @@ function BakeScreen({ id }: { id: string }) {
   const [temp, setTemp] = useState("");
   const [proof, setProof] = useState("");
   const [baked, setBaked] = useState("");
-  const [checks, setChecks] = useState<string[]>(saved?.checks ?? []);
+  const [checks, setChecks] = useState<string[]>(saved?.checks ?? (recipe ? preparationChecks(boot!.user.settings, recipe) : []));
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
@@ -2008,6 +2018,7 @@ function BakeScreen({ id }: { id: string }) {
       id: sessionId,
       recipeId: id,
       versionId: version?.id ?? null,
+      run: params.get("run"),
       recipe,
       scale,
       step: nextStep,
@@ -2204,7 +2215,7 @@ function BakeScreen({ id }: { id: string }) {
           <button
             className="button outline"
             onClick={() => {
-              window.location.href = `/recipes/${id}/bake?run=${crypto.randomUUID()}${version ? `&version=${version.id}` : ""}`;
+              window.location.href = bakeLink(id, { run: crypto.randomUUID(), versionId: version?.id, scale });
             }}
           >
             별도의 새 시도 시작

@@ -5,6 +5,7 @@ import { useLab, api, amount, allergenName } from "./context";
 import { Empty, PageHeading } from "./ui";
 import { stockAmount } from "@/lib/domain";
 import type { Pantry, Recipe } from "@/lib/types";
+import { bakeLink, preparationFingerprint, preparationChecks } from "@/lib/consumer-flow";
 
 // 처음 온 사용자도 등록 → 탐색 → 만들기 → 기록 순서를 놓치지 않도록 연결합니다.
 export function KitchenJourney() {
@@ -20,13 +21,13 @@ export function KitchenJourney() {
   return <section className="consumer-journey" aria-label="나의 베이킹 시작하기">
     <div className="section-heading"><h2>오늘은 여기서 시작해요</h2><Link href="/settings">내 기록 백업 ↗</Link></div>
     <div className="journey-grid">{steps.map(s => <Link key={s.href} href={s.href} className="journey-card"><strong>{s.done ? "✓ " : ""}{s.title}</strong><span>{s.text}</span></Link>)}</div>
-    {active && <p className="notice">진행 중인 베이킹이 있어요. <Link href={`/recipes/${active.recipeId}/bake${active.versionId ? `?version=${active.versionId}` : `?scale=${active.scale ?? 1}`}`}>마지막 단계부터 이어하기 →</Link></p>}
+    {active && <p className="notice">진행 중인 베이킹이 있어요. <Link href={bakeLink(active.recipeId, { versionId: active.versionId, scale: active.scale, run: active.run })}>마지막 단계부터 이어하기 →</Link></p>}
   </section>;
 }
 
 export function RecipePreparation({ recipe }: { recipe: Recipe }) {
   const { boot, save, notify } = useLab();
-  const [checked, setChecked] = useState<string[]>([]);
+  const [checked, setChecked] = useState<string[]>(() => preparationChecks(boot!.user.settings, recipe));
   const [copying, setCopying] = useState(false);
   const c = boot!.catalog;
   const items = recipe.ingredients.filter(i => !i.optional).map(item => {
@@ -43,10 +44,14 @@ export function RecipePreparation({ recipe }: { recipe: Recipe }) {
     <div className="panel-title"><h2>시작 전, 내 주방과 대조하기</h2><Link href="/kitchen">재고 수정 ↗</Link></div>
     <p>필수 재료 {items.length}개 중 {ready}개는 수량까지 확인됐어요. 계량한 재료를 체크하세요.</p>
     <div className="preparation-list">{items.map(i => <label className="check-label" key={i.id}>
-      <input type="checkbox" checked={checked.includes(i.id)} onChange={() => setChecked(checked.includes(i.id) ? checked.filter(id => id !== i.id) : [...checked, i.id])} />
+      <input type="checkbox" checked={checked.includes(i.id)} onChange={async () => {
+        const before = checked, next = checked.includes(i.id) ? checked.filter(id => id !== i.id) : [...checked, i.id];
+        setChecked(next);
+        if (!await save("settings", { id: `preparation-${recipe.id}-${recipe.yieldCount}`, kind: "preparation", fingerprint: preparationFingerprint(recipe), checks: next })) setChecked(before);
+      }} />
       <span><strong>{i.name}</strong> {amount(i.quantity)} {i.unit}<small>{i.stock.unknown ? "보유량 확인 필요" : i.missing ? `${amount(i.missing)} ${i.unit} 추가 준비` : "보유량 충분"}</small></span>
     </label>)}</div>
-    <p role="status">계량 확인 {checked.length} / {items.length}</p>
+    <p role="status">계량 확인 {checked.length} / {items.length} · 같은 배합으로 만들기를 시작하면 체크를 이어갑니다.</p>
     {!!allergens.length && <p>재료 사전에 표시된 알레르기 관련 성분: <strong>{allergens.map(allergenName).join(" · ")}</strong>. 실제 사용 제품의 성분표도 확인하세요.</p>}
     {!!tools.length && <p className="notice">확인할 도구: {tools.map(id => c.equipment.find(t => t.id === id)?.name ?? id).join(" · ")} <Link href="/lab">대체 방법 찾기 ↗</Link></p>}
     <div className="row-actions"><button className="button outline" disabled={!missing.length || copying} onClick={async () => {

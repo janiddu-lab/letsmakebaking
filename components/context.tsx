@@ -137,6 +137,8 @@ export function LabProvider({ children }: { children: ReactNode }) {
         profileId,
         setProfile: (id) => {
           localStorage.setItem("baking-profile", id);
+          // 주방을 전환할 때 이전 사용자의 입력 상태가 다음 주방에 남지 않도록 비웁니다.
+          setBoot(null);
           setProfileId(id);
         },
         refresh,

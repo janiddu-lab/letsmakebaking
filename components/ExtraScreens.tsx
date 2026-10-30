@@ -23,6 +23,7 @@ import {
 import { useLab, api, categories, amount, photoUrl, allergenName } from "./context";
 import { Dialog, Empty, PageHeading, SourceList, Tag } from "./ui";
 import { PracticalGuide } from "./PracticalGuide";
+import CupWorkshop from "./CupWorkshop";
 const ModelViewer = dynamic(() => import("./ModelViewer"), { ssr: false });
 
 // 수분 슬라이더는 원리를 설명하는 예시이며 실제 빵의 완성 모양을 예측하지 않습니다.
@@ -389,6 +390,7 @@ export function LearnScreen({ id }: { id?: string }) {
             </>
           )}
           {article && <PracticalGuide key={article.id} id={article.id} />}
+          {article?.id === "basic-volume" && <CupWorkshop key={boot!.profile.id} />}
           {(ing || tool) && <div className="space-top"><h3>이 재료·도구의 대체 방법</h3>{c.substitutions.filter(r => r.fromId === (ing?.id ?? tool?.id)).map(r => <details key={r.id}><summary>{r.description}</summary><p>적용 조건: {r.conditions}</p><p>바꿀 과정: {r.changes}</p><p>주의할 한계: {r.limits}</p></details>)}<Link className="inline-link" href="/lab">레시피를 선택해 대체 배합 확인하기 →</Link></div>}
           {advanced &&
             article?.advanced.map((line, i) => (
